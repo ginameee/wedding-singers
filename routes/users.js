@@ -3,6 +3,7 @@ var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var User = require('../models/user');
+
 // --------------------------------------------------
 // HTTPS POST /users/local : 회원가입(로컬)
 // --------------------------------------------------
@@ -24,6 +25,7 @@ router.post('/local', isSecure, function(req, res, next) {
   });
 });
 
+
 // --------------------------------------------------
 // HTTPS POST /users/facebook/token : 회원가입(연동)
 // --------------------------------------------------
@@ -33,6 +35,7 @@ router.post('/facebook/token', isSecure, function(req, res, next) {
   });
 
 });
+
 
 // --------------------------------------------------
 // HTTPS DELETE /users/me : 회원탈퇴
@@ -47,4 +50,5 @@ router.delete('/me', isSecure, isAuthenticated, function(req, res, next) {
     });
   });
 });
+
 module.exports = router;

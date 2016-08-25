@@ -15,7 +15,7 @@ function isAuthenticated(req, res, next) {
 function isSecure(req, res, next) {
     if (!req.secure) {
         return res.status(426).send({
-            message: '인증이 필요해!'
+            message: 'https로!!'
         });
     }
     next();

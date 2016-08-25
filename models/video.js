@@ -29,12 +29,15 @@ function findVideoById(id, callback) {
 }
 
 function findVideoByFilter(search, callback) {
+    callback(null, true);
 }
 
 function updateVideo(id, callback) {
+    callback(null ,true);
 }
 
 function insertVideo(user_id, callback) {
+    callback(null, true);
 }
 
 function listVideo(pageNo, rowCnt, callback) {

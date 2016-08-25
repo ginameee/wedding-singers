@@ -30,6 +30,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
   });
 });
 
+
 // --------------------------------------------------
 // HTTP POST /favorites : 찜 하기
 // --------------------------------------------------
@@ -40,6 +41,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
  });
 
 });
+
 
 // --------------------------------------------------
 // HTTP DELETE /favorites : 찜 목록 삭제

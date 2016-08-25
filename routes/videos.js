@@ -77,6 +77,8 @@ router.get('/main', isAuthenticated, function(req, res, next) {
 // HTTP POST /videos : 동영상 게시
 // --------------------------------------------------
 router.post('/', isAuthenticated, function(req, res, next) {
+    var userId = req.user.id;
+
     Video.insertVideo(userId, function(err, result) {
         res.send({
             message: '동영상 게시가 정상적으로 처리되었습니다.'
@@ -96,7 +98,6 @@ router.put('/:vid', isAuthenticated, function(req, res, next) {
         });
     });
 });
-
 
 
 // --------------------------------------------------

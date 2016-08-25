@@ -26,6 +26,7 @@ router.put('/', isAuthenticated, function(req, res, next) {
 
 });
 
+
 // --------------------------------------------------
 // HTTP GET /reservations : 예약 목록 조회
 // --------------------------------------------------
@@ -58,6 +59,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
   });
 
 });
+
 
 // --------------------------------------------------
 // HTTP GET /reservations/:id : 예약 상세 보기

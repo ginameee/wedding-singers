@@ -19,6 +19,7 @@ var singer = require('./routes/singers');
 var user = require('./routes/users');
 var video = require('./routes/videos');
 var auth = require('./routes/auth');
+var chatting = require('./routes/chatting');
 
 var app = express();
 
@@ -57,7 +58,7 @@ app.use('/reviews', review);
 app.use('/singers', singer);
 app.use('/videos', video);
 app.use('/auth', auth);
-
+app.use('/chatting', chatting);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -21,6 +21,7 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
 
 });
 
+
 // --------------------------------------------------
 // HTTPS PUT /customers/me : Customer 프로필수정
 // --------------------------------------------------
@@ -31,6 +32,7 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
   });
 
 });
+
 
 // --------------------------------------------------
 // HTTP GET /customers/mypoint : Customer 마이포인트 조회
@@ -63,6 +65,7 @@ router.get('/mypoint', isAuthenticated, function(req, res, next) {
   });
 
 });
+
 
 // --------------------------------------------------
 // HTTP GET /customers/:cid : Customer 프로필조회

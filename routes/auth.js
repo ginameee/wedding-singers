@@ -11,18 +11,20 @@ var User = require('../models/user.js');
 
 
 passport.use(new FacebookTokenStrategy({
-        clientID: process.env.FACEBOOK_APP_ID,
-        clientSecret: process.env.FACEBOOK_APP_SECRET
-    }, function(accessToken, refreshToken, profile, done) {
-        console.log(profile);
-        done(null, profile);
-    }
-));
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET
+}, function(accessToken, refreshToken, profile, done) {
+    User.findOrCreate(profile, function (err, user) {
+        if (err) {
+            return done(err);
+        }
+        return done(null, user);
+    });
+}));
 
-
-passport.use(new LocalStrategy({usernameField: 'id', passwordField: 'password'}, function(id, password, done) {
+passport.use(new LocalStrategy({usernameField: 'email', passwordField: 'password'}, function(email, password, done) {
     // 1. 해당하는 아이디가 존재하는지 확인
-    User.findUserById(id, function(err, user) {
+    User.findUserByEmail(email, function(err, user) {
         if (err) {
             return done(err);
         }
@@ -44,16 +46,14 @@ passport.use(new LocalStrategy({usernameField: 'id', passwordField: 'password'},
     });
 }));
 
-
 passport.serializeUser(function(user, done) {
     // user.id로 세션정보를 저장
     done(null, user.id);
 });
 
-
 passport.deserializeUser(function(id, done) {
     // 세션정보(user.id)로 user객체 만들어오기
-    User.findUserById(id, function(err, user) {
+    User.findUser(id, function(err, user) {
        if (err) {
            return done(err);
        }
@@ -81,13 +81,14 @@ router.post('/local/login', isSecure, passport.authenticate('local'), function(r
     });
 });
 
+
 // --------------------------------------------------
 // HTTPS post /auth/facebook/token : 로그인(연동)
 // --------------------------------------------------
-router.post('/facebook/token', passport.authenticate('facebook-token'), function(req, res, next) {
-
-    res.send(req);
+router.post('/facebook/token', isSecure, passport.authenticate('facebook-token'), function(req, res, next) {
+    res.send(req.user? '성공' : '실패');
 });
+
 
 // --------------------------------------------------
 // HTTP GET /auth/logout : 로그아웃(연동)
