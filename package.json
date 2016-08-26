@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "async": "^2.0.1",
     "body-parser": "~1.15.1",
     "connect-redis": "^3.1.0",
     "cookie-parser": "~1.4.3",
@@ -15,6 +16,7 @@
     "https": "^1.0.0",
     "jade": "~1.11.0",
     "morgan": "~1.7.0",
+    "mysql": "^2.11.1",
     "node-gcm": "^0.14.4",
     "nodemon": "^1.10.2",
     "passport": "^0.3.2",

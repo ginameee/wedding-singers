@@ -22,9 +22,6 @@ var testObj = [
 
 function findVideoById(id, callback) {
     var result = {};
-    for (var i=0; i<testObj.length; i++) {
-        if (testObj[i].idx === id) result = testObj;
-    }
     callback(null, result);
 }
 

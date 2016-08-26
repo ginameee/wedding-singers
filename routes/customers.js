@@ -23,7 +23,7 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
-// HTTPS PUT /customers/me : Customer 프로필수정
+// HTTPSS PUT /customers/me : Customer 프로필수정
 // --------------------------------------------------
 router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
 
@@ -68,7 +68,7 @@ router.get('/mypoint', isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
-// HTTP GET /customers/:cid : Customer 프로필조회
+// HTTPS GET /customers/:cid : Customer 프로필조회
 // --------------------------------------------------
 router.get('/:cid', isSecure, isAuthenticated, function(req, res, next) {
 

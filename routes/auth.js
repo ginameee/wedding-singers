@@ -24,6 +24,7 @@ passport.use(new FacebookTokenStrategy({
 
 passport.use(new LocalStrategy({usernameField: 'email', passwordField: 'password'}, function(email, password, done) {
     // 1. 해당하는 아이디가 존재하는지 확인
+    console.log('email : '+ email + ' / password : ' + password);
     User.findUserByEmail(email, function(err, user) {
         if (err) {
             return done(err);
@@ -31,7 +32,6 @@ passport.use(new LocalStrategy({usernameField: 'email', passwordField: 'password
         if (!user) {
             return done(null, false);
         }
-
         // 2. 입력받은 password가 유효한 비밀번호인지 확인
         User.verifyPassword(password, user.password, function(err, result) {
             if (err) {
@@ -91,9 +91,9 @@ router.post('/facebook/token', isSecure, passport.authenticate('facebook-token')
 
 
 // --------------------------------------------------
-// HTTP GET /auth/logout : 로그아웃(연동)
+// HTTPS GET /auth/logout : 로그아웃(연동)
 // --------------------------------------------------
-router.get('/logout', function(req, res, next) {
+router.get('/logout', isSecure, function(req, res, next) {
     req.logout();
     res.send({
         message: 'local logout'

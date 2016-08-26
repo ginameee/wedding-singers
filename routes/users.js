@@ -9,19 +9,31 @@ var User = require('../models/user');
 // --------------------------------------------------
 router.post('/local', isSecure, function(req, res, next) {
   var user = {};
-  user.id = req.body.id;
-  user.email = user.id;
+  user.email = req.body.email;
   user.password = req.body.password;
   user.name = req.body.name;
   user.phone = req.body.phone;
   user.waytosearch = req.body.waytosearch;
-  user.type = req.body.type;
+  user.type = parseInt(req.body.type);
+  console.log(user);
 
-  User.registerUser(user, function(err, result) {
-    if (err) return next(err);
-    res.send({
-      message: '회원가입(로컬)이 정상적으로 처리되었습니다.'
-    });
+  User.findUserByEmail(user.email, function(err, result) {
+    if (err) {
+      return next(err);
+    }
+
+    if (result) {
+      return next(new Error('이미 존재하는 email 입니다!'));
+    }
+
+    else {
+      User.registerUser(user, function(err, result) {
+        if (err) return next(err);
+        res.send({
+          message: '회원가입(로컬)이 정상적으로 처리되었습니다.'
+        });
+      });
+    }
   });
 });
 

@@ -7,7 +7,7 @@ var Video = require('../models/video.js');
 
 
 // --------------------------------------------------
-// HTTP GET /videos?thema=3&location=2&s_workday='2016-05-32'&e_workday='2016-05-32'&price=””&composition=””&hash=””&pageNo=””&rowCnt=”” : 동영상 검색
+// HTTP GET /videos?theme=3&location=2&s_workday='2016-05-32'&e_workday='2016-05-32'&price=””&composition=””&hash=””&pageNo=””&rowCnt=”” : 동영상 검색
 // --------------------------------------------------
 router.get('/', isAuthenticated, function(req, res, next) {
     var rowCnt = req.query.rowCnt || 0;
@@ -48,7 +48,6 @@ router.get('/', isAuthenticated, function(req, res, next) {
 });
 
 
-
 // --------------------------------------------------
 // HTTP GET /videos/main?type=2&pageNo=3&rowCnt=2 : 메인페이지 동영상 목록
 // --------------------------------------------------
@@ -85,7 +84,6 @@ router.post('/', isAuthenticated, function(req, res, next) {
         });
     });
 });
-
 
 
 // --------------------------------------------------
