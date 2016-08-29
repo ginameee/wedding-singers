@@ -8,7 +8,7 @@ var LocalStrategy = require('passport-local').Strategy;
 var FacebookTokenStrategy = require('passport-facebook-token');
 var isSecure = require('./common').isSecure;
 var User = require('../models/user.js');
-
+var isAuthenticated = require('./common').isAuthenticated;
 
 passport.use(new FacebookTokenStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
@@ -48,6 +48,7 @@ passport.use(new LocalStrategy({usernameField: 'email', passwordField: 'password
 
 passport.serializeUser(function(user, done) {
     // user.id로 세션정보를 저장
+    console.log('passport.serializeUser가 넘겨받은 user.id : ' + user.id);
     done(null, user.id);
 });
 
@@ -86,14 +87,19 @@ router.post('/local/login', isSecure, passport.authenticate('local'), function(r
 // HTTPS post /auth/facebook/token : 로그인(연동)
 // --------------------------------------------------
 router.post('/facebook/token', isSecure, passport.authenticate('facebook-token'), function(req, res, next) {
-    res.send(req.user? '성공' : '실패');
+    if (!req.user) {
+        res.send('로그인실패!');
+    }
+    else {
+        res.send('로그인이 완료되었습니다');
+    }
 });
 
 
 // --------------------------------------------------
 // HTTPS GET /auth/logout : 로그아웃(연동)
 // --------------------------------------------------
-router.get('/logout', isSecure, function(req, res, next) {
+router.get('/logout', isSecure, isAuthenticated, function(req, res, next) {
     req.logout();
     res.send({
         message: 'local logout'

@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
+var Favorite = require('../models/favorite');
+
 
 // --------------------------------------------------
 // HTTP GET /favorites?pageNo=&rowCount= : 찜 목록 조회
@@ -10,6 +12,8 @@ router.get('/', isAuthenticated, function(req, res, next) {
 
     var pageNo = parseInt(req.query.pageNo, 10) || 1;
     var rowCnt = parseInt(req.query.rowCnt, 10) || 10;
+  
+  Favorite.insertFavorite();
 
   res.send({
     message: '찜 목록 조회가 정상적으로 처리되었습니다,',

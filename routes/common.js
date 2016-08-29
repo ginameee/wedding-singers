@@ -2,7 +2,6 @@
  * Created by Tacademy on 2016-08-24.
  */
 function isAuthenticated(req, res, next) {
-
     if (!req.user) {
         return res.status(401).send({
             message: 'login required'

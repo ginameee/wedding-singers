@@ -1,27 +1,121 @@
 /**
  * Created by Tacademy on 2016-08-24.
  */
-var testObj = {
-    user_id : 3,
-    email: 'ginameee@naver.com',
-    comment: '가왕 출신입니다.',
-    description: '안녕하세요! 복면가왕에 출연했던 웨딩싱어 입니다. '+
-    '저는 발라드전문이구요 장난이니니까 믿어주세요',
-    standard_price: 300000,
-    special_price: 600000,
-    composition: '발라드',
-    theme: '솔로',
-    penalty: 3,
-    songs: ['다행이다', '감사']
-};
+var dbPool = require('../models/common').dbPool;
+var async = require('async');
 
 
-function updateSinger(userId, callback) {
+function updateSinger(singer, callback) {
+    var sql_update_singer = 'UPDATE singer ' +
+                            'SET comment = ?, description = ?, standard_price = ?, special_price = ?, ' +
+                            'composition = ?, theme = ? ' +
+                            'WHERE user_id = ?';
+    var sql_update_singer_songs = 'INSERT INTO singer_song(song, singer_user_id) VALUES(?, ?)';
+    var sql_delete_singer_songs = 'DELETE FROM singer_song WHERE singer_user_id = ?';
 
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+
+        dbConn.beginTransaction(function (err) {
+            if (err) {
+                return callback(err);
+            }
+
+            async.series([deleteSingerSong, insertSingerSongs, updateSingerInfo], function(err) {
+                if (err) {
+                    return dbConn.rollback(function () {
+                        dbConn.release();
+                        callback(err);
+                    });
+                }
+                dbConn.commit(function () {
+                    dbConn.release();
+                    callback(null);
+                });
+            });
+        });
+
+        function insertSingerSongs(callback) {
+            async.each(singer.songs, function(item, cb) {
+                dbConn.query(sql_update_singer_songs, [item, singer.user_id], function(err, result) {
+                    if (err) {
+                        return cb(err);
+                    }
+                    cb(null, true);
+                });
+            });
+            callback(null);
+        }
+
+        function updateSingerInfo(cb) {
+            dbConn.query(sql_update_singer, [singer.comment, singer.description, singer.standard_price, singer.special_price, singer.composition, singer.theme, singer.user_id], function(err, result) {
+                if (err) {
+                    return cb(err);
+                }
+                cb(null, result);
+            });
+        }
+
+        function deleteSingerSong(cb) {
+            dbConn.query(sql_delete_singer_songs, singer.user_id, function(err, result) {
+                if (err) {
+                    return cb(err);
+                }
+                cb(null);
+            });
+        }
+    });
 }
 
-function findSingerById(userId, callback) {
-    if (testObj.user_id === userId ) callback(null, testObj);
+
+function findSingerById(singer, callback) {
+    var sql_select_singer = 'SELECT * FROM user u JOIN singer s WHERE u.id = ?';
+    var sql_select_songs = 'SELECT * FROM singer_song WHERE singer_user_id = ?';
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+
+        async.parallel([selectSinger, selectSingerSongs], function(err, result) {
+            if (err) {
+                return callback(err);
+            }
+            dbConn.release();
+            callback(null, singer);
+        });
+
+        function selectSinger(cb) {
+            dbConn.query(sql_select_singer, [singer.user_id], function(err, results) {
+                if (err) {
+                    dbConn.release();
+                    return cb(err);
+                }
+                singer.email = results[0].email || '';
+                singer.comment = results[0].comment || '';
+                singer.description = results[0].description || '';
+                singer.standard_price = parseInt(results[0].standard_price || 0 );
+                singer.special_price = parseInt(results[0].special_price || 0);
+                singer.composition = parseInt(results[0].theme || 0);
+                singer.penalty = parseInt(results[0].penalty);
+                cb(null, true);
+            });
+        }
+
+        function selectSingerSongs(cb) {
+            dbConn.query(sql_select_songs, [singer.user_id], function(err, results) {
+                if (err) {
+                    dbConn.release();
+                    return cb(err);
+                }
+                singer.songs = results;
+                cb(null, true);
+            });
+        }
+    });
 }
 
 function findSingerHolidaies(userId, callback) {
@@ -31,6 +125,7 @@ function findSingerHolidaies(userId, callback) {
 function updateSingerHolidaies(userId, callback) {
     callback(null, true);
 }
+
 
 module.exports.updateSinger = updateSinger;
 module.exports.findSingerById = findSingerById;
