@@ -32,6 +32,32 @@ function findUser(id, callback) {
     });
 }
 
+function findUserById(id, callback) {
+    var sql_select_user_id = 'SELECT * FROM user WHERE id = ?';
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+
+        dbConn.query(sql_select_user_id, [id], function(err, results) {
+            dbConn.release();
+
+            if (err) {
+                return callback(err);
+            }
+
+            if (results.length === 0) {
+                return callback(null, null);
+            }
+            console.log({
+                result: results[0]
+            });
+            callback(null, results[0]);
+        });
+    })
+}
+
 // POST users/local 에서 회원가입시 회원의 존재유무를 파악하기 위해서 사용되는 함수
 // POST auth/local/login 에서 로그인시 사용되는 함수
 function findUserByEmail(email, callback) {
@@ -58,7 +84,6 @@ function findUserByEmail(email, callback) {
             callback(null, results[0]);
         });
     })
-
 }
 
 
@@ -225,6 +250,7 @@ function registerUser(user, callback) {
 }
 
 
+// POST users/facebook/token 에서 회원가입을 할 때 호출되는 함수
 function registerUserFB(user, callback) {
     var sql_update_user = 'UPDATE user ' +
                           'SET email = ?, name = ?, phone = ?, waytosearch = ?, type = ?  '+
@@ -303,27 +329,6 @@ function registerUserFB(user, callback) {
 }
 
 
-function updateUser(user, callback) {
-    var sql_update_user = 'UPDATE user ' +
-                           'SET email = ?, name = ?, phone = ?, waytosearch = ?, type = ?  '+
-                           'WHERE id = ?';
-
-    dbPool.getConnection(function(err, dbConn) {
-        if (err) {
-            return callback(err);
-        }
-
-            dbConn.query(sql_update_user, [user.email, user.name, user.phone, user.waytosearch, user.type, user.id], function(err, result) {
-                dbConn.release();
-                if (err) {
-                    return callback(err);
-                }
-                callback(null);
-            });
-    });
-}
-
-
 function deleteUser(userId, callback) {
     var sql_delete_user = 'DELETE FROM user WHERE id = ?';
 
@@ -343,11 +348,33 @@ function deleteUser(userId, callback) {
 }
 
 
+function updateUser(user, callback) {
+    var sql_update_user = 'UPDATE user ' +
+        'SET email = ?, name = ?, phone = ?, waytosearch = ?, type = ?  photoURL = ?'+
+        'WHERE id = ?';
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+
+        dbConn.query(sql_update_user, [user.email, user.name, user.phone, user.waytosearch, user.type, user.id], function(err, result) {
+            dbConn.release();
+
+            if (err) {
+                return callback(err);
+            }
+            callback(null);
+        });
+    });
+}
+
 module.exports.findUser = findUser;
 module.exports.findUserByEmail = findUserByEmail;
 module.exports.verifyPassword = verifyPassword;
 module.exports.findOrCreate = findOrCreate;
 module.exports.registerUser = registerUser;
 module.exports.deleteUser = deleteUser;
-module.exports.updateUser =  updateUser;
+module.exports.updateUser = updateUser;
 module.exports.registerUserFB = registerUserFB;
+module.exports.findUserById = findUserById;

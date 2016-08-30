@@ -4,7 +4,7 @@ var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var User = require('../models/user');
 var Singer = require('../models/singer');
-var Customer = require('../models/Customer');
+var Customer = require('../models/customer');
 var async = require('async');
 
 // --------------------------------------------------
@@ -105,5 +105,28 @@ router.delete('/me', isSecure, isAuthenticated, function(req, res, next) {
   });
 });
 
+
+// --------------------------------------------------
+// HTTPS GET /users/me : 마이페이지 조회 첫번째 화면
+// --------------------------------------------------
+router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
+  var user = {};
+  var userId = req.user.id;
+
+  User.findUserById(userId, function(err, result) {
+    if (err) {
+      return next(err);
+    }
+
+    user.name = result.name;
+    user.email = result.email;
+    user.point = result.point;
+
+    res.send({
+      message:'user mypage 조회가 정상적으로 처리되었습니다',
+      result: user
+    });
+  });
+});
 
 module.exports = router;

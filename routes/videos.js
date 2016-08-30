@@ -7,9 +7,27 @@ var Video = require('../models/video.js');
 
 
 // --------------------------------------------------
+// HTTP GET /videos/me : 내 동영상 보기
+// --------------------------------------------------
+router.get('/me', isAuthenticated, function(req, res, next) {
+    var uid = req.user.id;
+
+    Video.findVideoByUserId(uid, function(err, results) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            message: '동영상 조회가 정상적으로 처리되었습니다.',
+            result: results
+        });
+    });
+});
+
+
+// --------------------------------------------------
 // HTTP GET /videos?theme=3&location=2&s_workday='2016-05-32'&e_workday='2016-05-32'&price=””&composition=””&hash=””&pageNo=””&rowCnt=”” : 동영상 검색
 // --------------------------------------------------
-router.get('/', isAuthenticated, function(req, res, next) {
+router.get('/', function(req, res, next) {
     var rowCnt = req.query.rowCnt || 0;
     var pageNo = req.query.pageNo || 1;
 
@@ -51,7 +69,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 // HTTP GET /videos/main?type=2&pageNo=3&rowCnt=2 : 메인페이지 동영상 목록
 // --------------------------------------------------
-router.get('/main', isAuthenticated, function(req, res, next) {
+router.get('/main', function(req, res, next) {
     // 동영상을 검색할 때,
     var type = parseInt(req.query.type) || 1;
     var rowCnt = parseInt(req.query.rowCnt) || 1;
@@ -76,9 +94,20 @@ router.get('/main', isAuthenticated, function(req, res, next) {
 // HTTP POST /videos : 동영상 게시
 // --------------------------------------------------
 router.post('/', isAuthenticated, function(req, res, next) {
-    var userId = req.user.id;
+    // 매개변수를 저장할 객체 생성 (제목, 해시태그, URL(배열임), 작성날짜)
+    var video = {};
+    video.singer_user_id = req.user.id;
+    video.title = req.body.title;
+    video.url = req.body.url;
+    video.write_dtime = req.body.write_dtime;
+    video.hash = req.body.hash || [ '' ];
 
-    Video.insertVideo(userId, function(err, result) {
+    // InsertVideo 정의
+    Video.insertVideo(video, function(err, result) {
+        if (err) {
+            return next(err);
+        }
+
         res.send({
             message: '동영상 게시가 정상적으로 처리되었습니다.'
         });
@@ -90,7 +119,18 @@ router.post('/', isAuthenticated, function(req, res, next) {
 // HTTP PUT /videos/:vid : 동영상 수정
 // --------------------------------------------------
 router.put('/:vid', isAuthenticated, function(req, res, next) {
-    Video.updateVideo(req.params.vid, function(err, result) {
+    // 매개변수 받아올 객체 선언
+    var video = {};
+    video.id = req.params.vid;
+    video.title = req.body.title;
+    video.url = req.body.url;
+    video.hash = req.body.hash || [''];
+
+    Video.updateVideo(video, function(err, result) {
+        if (err) {
+            return next(err);
+        }
+
         res.send({
             message: '동영상 수정이 정상적으로 처리되었습니다.'
         });
@@ -101,12 +141,12 @@ router.put('/:vid', isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 // HTTP GET /videos/:vid : 동영상 보기
 // --------------------------------------------------
-router.get('/:vid', isAuthenticated, function(req, res, next) {
+router.get('/:vid', function(req, res, next) {
     console.log(req.params.vid);
-    Video.findVideoById(req.params.vid, function(err, results) {
+    Video.findVideoById(req.params.vid, function(err, result) {
         res.send({
             message: '동영상 조회가 정상적으로 처리되었습니다.',
-            result: results
+            result: result
         });
     });
 

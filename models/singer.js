@@ -10,70 +10,26 @@ function updateSinger(singer, callback) {
                             'SET comment = ?, description = ?, standard_price = ?, special_price = ?, ' +
                             'composition = ?, theme = ? ' +
                             'WHERE user_id = ?';
-    var sql_update_singer_songs = 'INSERT INTO singer_song(song, singer_user_id) VALUES(?, ?)';
-    var sql_delete_singer_songs = 'DELETE FROM singer_song WHERE singer_user_id = ?';
-
-
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
-
-        dbConn.beginTransaction(function (err) {
+        dbConn.query(sql_update_singer, [singer.comment, singer.description, singer.standard_price, singer.special_price, singer.composition, singer.theme, singer.user_id], function(err, result) {
+            dbConn.release();
             if (err) {
                 return callback(err);
             }
-
-            async.series([deleteSingerSong, insertSingerSongs, updateSingerInfo], function(err) {
-                if (err) {
-                    return dbConn.rollback(function () {
-                        dbConn.release();
-                        callback(err);
-                    });
-                }
-                dbConn.commit(function () {
-                    dbConn.release();
-                    callback(null);
-                });
-            });
+            callback(null, result);
         });
-
-        function insertSingerSongs(callback) {
-            async.each(singer.songs, function(item, cb) {
-                dbConn.query(sql_update_singer_songs, [item, singer.user_id], function(err, result) {
-                    if (err) {
-                        return cb(err);
-                    }
-                    cb(null, true);
-                });
-            });
-            callback(null);
-        }
-
-        function updateSingerInfo(cb) {
-            dbConn.query(sql_update_singer, [singer.comment, singer.description, singer.standard_price, singer.special_price, singer.composition, singer.theme, singer.user_id], function(err, result) {
-                if (err) {
-                    return cb(err);
-                }
-                cb(null, result);
-            });
-        }
-
-        function deleteSingerSong(cb) {
-            dbConn.query(sql_delete_singer_songs, singer.user_id, function(err, result) {
-                if (err) {
-                    return cb(err);
-                }
-                cb(null);
-            });
-        }
     });
 }
 
 
-function findSingerById(singer, callback) {
-    var sql_select_singer = 'SELECT * FROM user u JOIN singer s WHERE u.id = ?';
+function findSingerById(id, callback) {
+    var sql_select_singer = 'SELECT * FROM user u JOIN singer s ON (s.user_id = u.id) WHERE u.id = ?';
     var sql_select_songs = 'SELECT * FROM singer_song WHERE singer_user_id = ?';
+
+    var singer = {};
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -89,11 +45,15 @@ function findSingerById(singer, callback) {
         });
 
         function selectSinger(cb) {
-            dbConn.query(sql_select_singer, [singer.user_id], function(err, results) {
+            dbConn.query(sql_select_singer, [id], function(err, results) {
                 if (err) {
                     dbConn.release();
                     return cb(err);
                 }
+
+                console.log(results[0]);
+
+                console.log(results[0]);
                 singer.email = results[0].email || '';
                 singer.comment = results[0].comment || '';
                 singer.description = results[0].description || '';
@@ -106,24 +66,83 @@ function findSingerById(singer, callback) {
         }
 
         function selectSingerSongs(cb) {
-            dbConn.query(sql_select_songs, [singer.user_id], function(err, results) {
+            dbConn.query(sql_select_songs, [id], function(err, results) {
                 if (err) {
                     dbConn.release();
                     return cb(err);
                 }
                 singer.songs = results;
-                cb(null, true);
+                cb(null, singer);
             });
         }
     });
 }
 
+
 function findSingerHolidaies(userId, callback) {
-    callback(null, true);
+    var sql_select_holiday = 'SELECT DATE(CONVERT_TZ(holiday, \'+00:00\', \'+09:00\')) hd, singer_user_id FROM singer_holiday ' +
+                              'WHERE singer_user_id = ?';
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+
+        dbConn.query(sql_select_holiday, [userId], function(err, results) {
+            dbConn.release();
+
+            if (err) {
+                return callback(err);
+            }
+            console.log(results);
+            callback(null, results);
+        });
+    });
 }
 
-function updateSingerHolidaies(userId, callback) {
-    callback(null, true);
+
+function updateSingerHolidaies(singer, callback) {
+    var sql_insert_holiday = 'INSERT INTO singer_holiday(holiday, singer_user_id) ' +
+                              'VALUES (str_to_date(?, \'%Y-%m-%d\'), ?)';
+    var sql_select_holiday = 'SELECT * FROM singer_holiday ' +
+                              'WHERE holiday = str_to_date(?, \'%Y-%m-%d\') AND singer_user_id = ?';
+    var sql_delete_holiday = 'DELETE FROM singer_holiday ' +
+                              'WHERE holiday = str_to_date(?, \'%Y-%m-%d\') AND singer_user_id = ?';
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+
+        async.each(singer.update_dates, function(item, cb) {
+            dbConn.query(sql_select_holiday, [item, singer.user_id], function(err, results) {
+                if (err) {
+                    dbConn.release();
+                    return cb(err);
+                }
+
+                if(results.length > 0) {
+                    dbConn.query(sql_delete_holiday,[item, singer.user_id], function(err, result) {
+                        if (err) {
+                            dbConn.release();
+                            return cb(err);
+                        }
+                        return cb(null, result);
+                   });
+                } else {
+                    dbConn.query(sql_insert_holiday,[item, singer.user_id], function(err, result) {
+                        if (err) {
+                            dbConn.release();
+                            return cb(err);
+                        }
+                        return cb(null, result);
+                    });
+                }
+            });
+        });
+        dbConn.release();
+        callback(null, true);
+    });
 }
 
 

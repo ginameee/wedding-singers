@@ -31,10 +31,9 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
 // HTTPS GET /singers/me : Singer가 자신의 마이페이지 조회
 // --------------------------------------------------
 router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
-    var singer = {};
-    singer.user_id = req.user.id;
+    var sid = req.user.id;
 
-    Singer.findSingerById(singer, function(err, results) {
+    Singer.findSingerById(sid, function(err, results) {
         if (err) return next(err);
 
         res.send({
@@ -50,14 +49,20 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 router.get('/me/holidaies', isAuthenticated, function(req, res, next) {
     var userId = req.user.id;
+    console.log(userId);
     var holidaies = [];
 
     Singer.findSingerHolidaies(userId, function(err, results) {
-        if (err) return next(err);
+        if (err) {
+            return next(err);
+        }
+
+        holidaies = results;
+
         res.send({
             message: 'Singer 휴일 조회가 정상적으로 처리되었습니다.',
             result: {
-                holidaies: ['2016-05-31', '2016-02-13', '2016-12-12']
+                holidaies: holidaies
             }
         });
     });
@@ -68,47 +73,17 @@ router.get('/me/holidaies', isAuthenticated, function(req, res, next) {
 // HTTP PUT /singers/me/holidaies : Singer 휴일 변경
 // --------------------------------------------------
 router.put('/me/holidaies', isAuthenticated, function(req, res, next) {
-    var userId = req.user.id;
+    var singer = {};
+    singer.user_id = req.user.id;
+    singer.update_dates = req.body.update_dates;
 
-    Singer.updateSingerHolidaies(userId, function(err, results) {
+    Singer.updateSingerHolidaies(singer, function(err, results) {
         if (err) return next(err);
         res.send({
             message: 'Singer 휴일 변경이 정상적으로 처리되었습니다.'
         });
     });
 
-});
-
-
-// --------------------------------------------------
-// HTTP GET /singers/me/penalties?rowCnt=?&pageNo=3 : Singer 패널티포인트 조회
-// --------------------------------------------------
-router.get('/me/penalties', isSecure, function(req, res, next) {
-
-    if (req.query.pageNo || req.query.rowCnt) {
-        var pageNo = parseInt(req.query.pageNo, 10);
-        var rowCnt = parseInt(req.query.rowCnt, 10);
-    }
-
-    res.send({
-        message: '패널티 포인트 조회가 정상적으로 처리되었습니다.',
-        rowCnt: rowCnt,
-        pageNo: pageNo,
-        result: [
-            {
-                id: 1,
-                penalty: 30,
-                content: '불만접수',
-                write_date: '2016-05-31'
-            },
-            {
-                id:2,
-                penalty: 22,
-                content: '계약파기',
-                write_date: '2016-05-17'
-            }
-        ]
-    });
 });
 
 
@@ -128,6 +103,39 @@ router.get('/:sid', function(req, res, next) {
         });
     });
 });
+
+
+
+// --------------------------------------------------
+// HTTP GET /singers/me/penalties?rowCnt=?&pageNo=3 : Singer 패널티포인트 조회
+// --------------------------------------------------
+// router.get('/me/penalties', isSecure, function(req, res, next) {
+//
+//     if (req.query.pageNo || req.query.rowCnt) {
+//         var pageNo = parseInt(req.query.pageNo, 10);
+//         var rowCnt = parseInt(req.query.rowCnt, 10);
+//     }
+//
+//     res.send({
+//         message: '패널티 포인트 조회가 정상적으로 처리되었습니다.',
+//         rowCnt: rowCnt,
+//         pageNo: pageNo,
+//         result: [
+//             {
+//                 id: 1,
+//                 penalty: 30,
+//                 content: '불만접수',
+//                 write_date: '2016-05-31'
+//             },
+//             {
+//                 id:2,
+//                 penalty: 22,
+//                 content: '계약파기',
+//                 write_date: '2016-05-17'
+//             }
+//         ]
+//     });
+// });
 
 
 
