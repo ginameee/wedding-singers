@@ -42,6 +42,7 @@ router.post('/local', isSecure, function(req, res, next) {
       });
     }
   });
+
 });
 
 
@@ -125,6 +126,28 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     res.send({
       message:'user mypage 조회가 정상적으로 처리되었습니다',
       result: user
+    });
+  });
+});
+
+
+// --------------------------------------------------
+// HTTPS PUT /users/me : 유저 정보 수정
+// --------------------------------------------------
+router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
+  var user = {};
+  user.id = req.user.id;
+  user.password = req.body.password;
+  user.name = req.body.name;
+  user.phone = req.body.phone;
+  user.photoURL = req.body.url;
+
+  User.updateUser(user, function(err, result) {
+    if (err) {
+      return next(err);
+    }
+    res.send({
+      message: 'user 프로필 변경이 정상적으로 처리되었습니다.'
     });
   });
 });

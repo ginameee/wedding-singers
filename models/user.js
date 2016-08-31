@@ -32,6 +32,7 @@ function findUser(id, callback) {
     });
 }
 
+
 function findUserById(id, callback) {
     var sql_select_user_id = 'SELECT * FROM user WHERE id = ?';
 
@@ -57,6 +58,7 @@ function findUserById(id, callback) {
         });
     })
 }
+
 
 // POST users/local 에서 회원가입시 회원의 존재유무를 파악하기 위해서 사용되는 함수
 // POST auth/local/login 에서 로그인시 사용되는 함수
@@ -271,7 +273,7 @@ function registerUserFB(user, callback) {
             }
 
             if (user.type === 1) {
-                async.series([updateUser, registerSinger], function(err) {
+                async.series([updateUserInfo, registerSinger], function(err) {
                     if (err) {
                         return dbConn.rollback(function () {
                             dbConn.release();
@@ -284,7 +286,7 @@ function registerUserFB(user, callback) {
                     })
                 });
             } else {
-                async.series([updateUser, registerCustomer], function(err) {
+                async.series([updateUserInfo, registerCustomer], function(err) {
                     if (err) {
                         return dbConn.rollback(function () {
                             dbConn.release();
@@ -299,7 +301,7 @@ function registerUserFB(user, callback) {
             }
         });
 
-        function updateUser(cb) {
+        function updateUserInfo(cb) {
                 dbConn.query(sql_update_user, [user.email, user.name, user.phone, user.waytosearch, user.type, user.id], function(err, result) {
                     if (err) {
                         return cb(err);
@@ -348,9 +350,10 @@ function deleteUser(userId, callback) {
 }
 
 
+// PUT /users/me에서 회원정보를 변경할 때 호출되는 함수
 function updateUser(user, callback) {
     var sql_update_user = 'UPDATE user ' +
-        'SET email = ?, name = ?, phone = ?, waytosearch = ?, type = ?  photoURL = ?'+
+        'SET password = ?, name = ?, phone = ?, photoURL = ? '+
         'WHERE id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
@@ -358,7 +361,7 @@ function updateUser(user, callback) {
             return callback(err);
         }
 
-        dbConn.query(sql_update_user, [user.email, user.name, user.phone, user.waytosearch, user.type, user.id], function(err, result) {
+        dbConn.query(sql_update_user, [user.password, user.name, user.phone, user.photoURL, user.id], function(err, result) {
             dbConn.release();
 
             if (err) {

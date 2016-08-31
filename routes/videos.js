@@ -10,7 +10,9 @@ var Video = require('../models/video.js');
 // HTTP GET /videos/me : 내 동영상 보기
 // --------------------------------------------------
 router.get('/me', isAuthenticated, function(req, res, next) {
+    console.log('내 동영상 보기');
     var uid = req.user.id;
+    console.log(uid);
 
     Video.findVideoByUserId(uid, function(err, results) {
         if (err) {
@@ -40,8 +42,10 @@ router.get('/', function(req, res, next) {
         search.composition = req.query.composition;
         search.hash = req.query.hash;
 
+    // TODO: 필터 적용해서 검색 가능하게 수정
     // 사용자가 입력한 조건들을 모아놓은 객체를 이용해서 조건검색을 실시할 것임.
     Video.findVideoByFilter(search);
+    
 
     res.send({
         message: '동영상 검색이 정상적으로 처리되었습니다.',
@@ -152,3 +156,22 @@ router.get('/:vid', function(req, res, next) {
 
 });
 module.exports = router;
+
+
+// --------------------------------------------------
+// HTTP DELETE /videos/:vid : 동영상 삭제
+// --------------------------------------------------
+router.delete('/:vid', isAuthenticated, function(req, res, next) {
+    var vid = req.params.vid;
+
+    Video.deleteVideo(vid, function(err, result) {
+        if (err) {
+            return next(err);
+        }
+
+        res.send({
+            message: '동영상 삭제가 정상적으로 처리되었습니다'
+        });
+
+    });
+});

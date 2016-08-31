@@ -4,8 +4,9 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
 
+// HTTP GET /videos/me 에서 싱어가 자신이 게시한 동영상을 찾을 때 사용되는 함수
 function findVideoByUserId(uid, callback) {
-    var sql_select_video = 'SELECT * FROM singer_song WHERE singer_user_id = ?';
+    var sql_select_video = 'SELECT * FROM video WHERE singer_user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -25,7 +26,7 @@ function findVideoByUserId(uid, callback) {
 
 
 function findVideoById(id, callback) {
-    var sql_select_video = 'SELECT * FROM video v JOIN user u ON (v.singer_user_id = u.id) WHERE v.id = ?;';
+    var sql_select_video = 'SELECT * FROM video v JOIN user u ON (v.singer_user_id = u.id) WHERE v.id = ?';
     var video = {};
 
     dbPool.getConnection(function(err, dbConn) {
@@ -58,12 +59,6 @@ function findVideoByFilter(search, callback) {
 
 
 function updateVideo(video, callback) {
-    // query 작성 (노래수정)
-    var sql_update_video = 'UPDATE video SET title = ?, url = ? WHERE id = ?';
-
-    // query 작성 (해쉬태그수정)
-    var sql_delete_video_hash = 'DELETE FROM video_hash WHERE video_id = ?';
-    var sql_insert_video_hash = 'INSERT INTO video_hash(video_id, tag) VALUES(?, ?)';
 
     // DB풀에서 객체 얻어오기
     dbPool.getConnection(function(err, dbConn) {
@@ -91,6 +86,8 @@ function updateVideo(video, callback) {
         });
 
         function updateVideoInfo(cb) {
+            var sql_update_video = 'UPDATE video SET title = ?, url = ? WHERE id = ?';
+
             dbConn.query(sql_update_video, [video.title, video.url, video.id], function(err, result) {
                 dbConn.release();
                 if (err) {
@@ -101,6 +98,8 @@ function updateVideo(video, callback) {
         }
 
         function deleteVideoHash(cb) {
+            var sql_delete_video_hash = 'DELETE FROM video_hash WHERE video_id = ?';
+
             dbConn.query(sql_delete_video_hash, [video.id], function(err, result) {
                 if (err) {
                     return cb(err);
@@ -110,6 +109,8 @@ function updateVideo(video, callback) {
         }
 
         function insertVideoHash(cb) {
+            var sql_insert_video_hash = 'INSERT INTO video_hash(video_id, tag) VALUES(?, ?)';
+
             async.each(video.hash, function(item, callback) {
                 dbConn.query(sql_insert_video_hash, [video.id, item], function(err, result) {
                     if (err) {
@@ -191,6 +192,59 @@ function listVideo(pageNo, rowCnt, callback) {
     callback(null, true);
 }
 
+// HTTP DELETE /videos/:vid 에서 호출할 동영상을 지우는 함수
+function deleteVideo(vid, callback) {
+
+    // TODO: dbConn 객체 얻어오기
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+
+        dbConn.beginTransaction(function(err) {
+            if (err) {
+                return callback(err);
+            }
+
+            async.series([deleteVideoHash, deleteVideoInfo], function (err) {
+                if (err) {
+                    return dbConn.rollback(function () {
+                        callback(err);
+                        dbConn.release();
+                    });
+                }
+                dbConn.commit(function () {
+                    callback(null);
+                    dbConn.release();
+                });
+            });
+        });
+
+        function deleteVideoHash(cb) {
+            var sql_delete_video_hash = 'DELETE FROM video_hash WHERE video_id = ?';
+
+            dbConn.query(sql_delete_video_hash, [vid], function(err, result) {
+                if (err) {
+                    return cb(err);
+                }
+                return cb(null, true);
+            });
+        }
+
+        function deleteVideoInfo(cb) {
+            var sql_delete_video = 'DELETE FROM video WHERE id = ?';
+
+            dbConn.query(sql_delete_video, [vid], function(err, result) {
+                if (err) {
+                    return cb(err);
+                }
+                return cb(null, true);
+            });
+        }
+    });
+
+}
+
 
 module.exports.findVideoById = findVideoById;
 module.exports.findVideoByFilter = findVideoByFilter;
@@ -198,4 +252,5 @@ module.exports.updateVideo = updateVideo;
 module.exports.insertVideo = insertVideo;
 module.exports.listVideo = listVideo;
 module.exports.findVideoByUserId = findVideoByUserId;
+module.exports.deleteVideo = deleteVideo;
 

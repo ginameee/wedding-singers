@@ -10,27 +10,23 @@ var Favorite = require('../models/favorite');
 // --------------------------------------------------
 router.get('/', isAuthenticated, function(req, res, next) {
 
-    var pageNo = parseInt(req.query.pageNo, 10) || 1;
-    var rowCnt = parseInt(req.query.rowCnt, 10) || 10;
+  var info = {};
+  info.pageNo = parseInt(req.query.pageNo, 10) || 1;
+  info.rowCnt = parseInt(req.query.rowCnt, 10) || 100;
+  info.uid = req.user.id;
   
-  Favorite.insertFavorite();
+  console.log(info.pageNo + '//' + info.rowCnt + '//' + info.uid);
 
-  res.send({
-    message: '찜 목록 조회가 정상적으로 처리되었습니다,',
-    pageNo: pageNo,
-    rowCnt: rowCnt,
-    result: [
-      {
-        video_id: 1,
-        video_title: 'blah blah',
-        write_dtime: '2015-06-31'
-      },
-      {
-        video_id: 2,
-        video_title: 'blah blah2',
-        write_dtime: '2015-05-31'
-      }
-    ]
+  Favorite.findFavoriteByUser(info, function(err, results) {
+    if (err) {
+      return next(err);
+    }
+    res.send({
+      message: '찜 목록 조회가 정상적으로 처리되었습니다,',
+      pageNo: info.pageNo,
+      rowCnt: info.rowCnt,
+      result: results
+    });
   });
 });
 
@@ -39,11 +35,19 @@ router.get('/', isAuthenticated, function(req, res, next) {
 // HTTP POST /favorites : 찜 하기
 // --------------------------------------------------
 router.post('/', isAuthenticated, function(req, res, next) {
+  var favorite = {};
+  favorite.uid = req.user.id;
+  favorite.vid = req.body.vid;
 
- res.send({
-   message: '찜 추가가 정상적으로 처리되었습니다.'
- });
+  Favorite.insertFavorite(favorite, function(err) {
+    if (err) {
+      return next(err);
+    }
 
+    res.send({
+      message: '찜 추가가 정상적으로 처리되었습니다.'
+    });
+  });
 });
 
 
@@ -52,8 +56,17 @@ router.post('/', isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 router.delete('/', isAuthenticated, function(req, res, next) {
 
-  res.send({
-    message: '찜 삭제가 정상적으로 처리되었습니다.'
+  var info = {};
+  info.uid = req.user.id;
+  info.vid = req.body.vid;
+
+  Favorite.deleteFavorite(info, function(err) {
+    if (err) {
+      return next(err);
+    }
+    res.send({
+      message: '찜 삭제가 정상적으로 처리되었습니다.'
+    });
   });
 
 });
