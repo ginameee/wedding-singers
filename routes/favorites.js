@@ -11,20 +11,14 @@ var Favorite = require('../models/favorite');
 router.get('/', isAuthenticated, function(req, res, next) {
 
   var info = {};
-  info.pageNo = parseInt(req.query.pageNo, 10) || 1;
-  info.rowCnt = parseInt(req.query.rowCnt, 10) || 100;
   info.uid = req.user.id;
-  
-  console.log(info.pageNo + '//' + info.rowCnt + '//' + info.uid);
 
   Favorite.findFavoriteByUser(info, function(err, results) {
     if (err) {
       return next(err);
     }
     res.send({
-      message: '찜 목록 조회가 정상적으로 처리되었습니다,',
-      pageNo: info.pageNo,
-      rowCnt: info.rowCnt,
+      code: 1,
       result: results
     });
   });
@@ -45,7 +39,8 @@ router.post('/', isAuthenticated, function(req, res, next) {
     }
 
     res.send({
-      message: '찜 추가가 정상적으로 처리되었습니다.'
+      code: 1,
+      result: '성공'
     });
   });
 });
@@ -65,7 +60,8 @@ router.delete('/', isAuthenticated, function(req, res, next) {
       return next(err);
     }
     res.send({
-      message: '찜 삭제가 정상적으로 처리되었습니다.'
+      code: 1,
+      result: '성공'
     });
   });
 

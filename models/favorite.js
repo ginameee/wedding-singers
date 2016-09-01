@@ -82,15 +82,14 @@ function deleteFavorite(info, callback) {
 function findFavoriteByUser(info, callback) {
     var sql_select_favorite = 'SELECT v.title title, v.write_dtime write_dtime, v.id video_id, v.favorite_cnt favorite_cnt, v.hit hit ' +
                               'FROM favorite f JOIN video v ON (f.video_id = v.id) ' +
-                              'WHERE customer_user_id = ? ' +
-                              'LIMIT ?, ?';
+                              'WHERE customer_user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         dbConn.release();
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql_select_favorite, [info.uid, (info.pageNo - 1) * info.rowCnt, info.rowCnt], function(err, results) {
+        dbConn.query(sql_select_favorite, [info.uid], function(err, results) {
             if (err) {
                 return callback(err);
             }

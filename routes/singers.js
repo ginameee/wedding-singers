@@ -37,7 +37,7 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
         if (err) return next(err);
 
         res.send({
-            message: '마이페이지 조회가 정상적으로 처리되었습니다.',
+            code: 1,
             result: results
         });
     });
@@ -60,7 +60,7 @@ router.get('/me/holidaies', isAuthenticated, function(req, res, next) {
         holidaies = results;
 
         res.send({
-            message: 'Singer 휴일 조회가 정상적으로 처리되었습니다.',
+            code: 1,
             result: {
                 holidaies: holidaies
             }
@@ -80,7 +80,8 @@ router.put('/me/holidaies', isAuthenticated, function(req, res, next) {
     Singer.updateSingerHolidaies(singer, function(err, results) {
         if (err) return next(err);
         res.send({
-            message: 'Singer 휴일 변경이 정상적으로 처리되었습니다.'
+            code: 1,
+            result: '성공'
         });
     });
 
@@ -91,14 +92,13 @@ router.put('/me/holidaies', isAuthenticated, function(req, res, next) {
 // HTTP GET /singers/:sid : Singer 프로필 조회
 // --------------------------------------------------
 router.get('/:sid', function(req, res, next) {
-    var singer = {};
-    singer.user_id = req.params.sid;
+    var sid = req.params.sid;
 
-    Singer.findSingerById(singer, function(err, results) {
+    Singer.findSingerById(sid, function(err, results) {
         if (err) return next(err);
 
         res.send({
-            message: '마이페이지 조회가 정상적으로 처리되었습니다.',
+            code: 1,
             result: results
         });
     });

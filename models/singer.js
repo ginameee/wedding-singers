@@ -3,7 +3,7 @@
  */
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
-
+var path = require('path');
 
 function updateSinger(singer, callback) {
     var sql_update_singer = 'UPDATE singer ' +
@@ -51,16 +51,20 @@ function findSingerById(id, callback) {
                     return cb(err);
                 }
 
+                console.log(id);
                 console.log(results[0]);
 
-                console.log(results[0]);
+                singer.user_id = results[0].user_id;
                 singer.email = results[0].email || '';
+                singer.name = results[0].name;
                 singer.comment = results[0].comment || '';
                 singer.description = results[0].description || '';
                 singer.standard_price = parseInt(results[0].standard_price || 0 );
                 singer.special_price = parseInt(results[0].special_price || 0);
                 singer.composition = parseInt(results[0].theme || 0);
                 singer.penalty = parseInt(results[0].penalty);
+                singer.photoURL = 'http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(results[0].photoURL);
+
                 cb(null, true);
             });
         }
@@ -80,7 +84,7 @@ function findSingerById(id, callback) {
 
 
 function findSingerHolidaies(userId, callback) {
-    var sql_select_holiday = 'SELECT DATE(CONVERT_TZ(holiday, \'+00:00\', \'+09:00\')) hd, singer_user_id FROM singer_holiday ' +
+    var sql_select_holiday = 'SELECT LEFT(DATE(CONVERT_TZ(holiday, \'+00:00\', \'+09:00\')), 10) holiday FROM singer_holiday ' +
                               'WHERE singer_user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
@@ -106,8 +110,8 @@ function updateSingerHolidaies(singer, callback) {
                               'VALUES (str_to_date(?, \'%Y-%m-%d\'), ?)';
     var sql_select_holiday = 'SELECT * FROM singer_holiday ' +
                               'WHERE holiday = str_to_date(?, \'%Y-%m-%d\') AND singer_user_id = ?';
-    var sql_delete_holiday = 'DELETE FROM singer_holiday ' +
-                              'WHERE holiday = str_to_date(?, \'%Y-%m-%d\') AND singer_user_id = ?';
+    // var sql_delete_holiday = 'DELETE FROM singer_holiday ' +
+    //                           'WHERE holiday = str_to_date(?, \'%Y-%m-%d\') AND singer_user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -122,13 +126,14 @@ function updateSingerHolidaies(singer, callback) {
                 }
 
                 if(results.length > 0) {
-                    dbConn.query(sql_delete_holiday,[item, singer.user_id], function(err, result) {
-                        if (err) {
-                            dbConn.release();
-                            return cb(err);
-                        }
-                        return cb(null, result);
-                   });
+                   //  dbConn.query(sql_delete_holiday,[item, singer.user_id], function(err, result) {
+                   //      if (err) {
+                   //          dbConn.release();
+                   //          return cb(err);
+                   //      }
+                   //      return cb(null, result);
+                   // });
+                    return cb(null, true);
                 } else {
                     dbConn.query(sql_insert_holiday,[item, singer.user_id], function(err, result) {
                         if (err) {

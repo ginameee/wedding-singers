@@ -1,5 +1,6 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
+var fs = require('fs');
 // passport.deserializeUser에서 세션을 통해 user객체를 생성할때 사용
 function findUser(id, callback) {
     console.log("findUser: " + id);
@@ -64,6 +65,7 @@ function findUserById(id, callback) {
 // POST auth/local/login 에서 로그인시 사용되는 함수
 function findUserByEmail(email, callback) {
     var sql_select_user_email = 'SELECT * FROM user WHERE email = ?';
+    var user = {};
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -80,6 +82,7 @@ function findUserByEmail(email, callback) {
             if (results.length === 0) {
                 return callback(null, null);
             }
+
             console.log({
                 result: results[0]
             });
@@ -91,8 +94,7 @@ function findUserByEmail(email, callback) {
 
 // POST auth/local/login 에서 비밀번호 확인을 위해서 사용되는 함수
 function verifyPassword(password, db_password, callback) {
-    var sql_select_user_password = 'SELECT * FROM user WHERE password = SHA2(?,512)';
-
+    var sql_select_user_password = 'SELECT * FROM user WHERE password = SHA2(?, 512)';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -104,7 +106,7 @@ function verifyPassword(password, db_password, callback) {
                 return callback(err);
             }
 
-            if (results[0].password !== db_password) {
+            if (results.length === 0) {
                 return callback(null, null);
             }
 
@@ -120,8 +122,8 @@ function findOrCreate(profile, callback) {
     user.facebookId = profile.id;
     console.log(user.facebookId);
 
-    var sql_select_user = 'SELECT * FROM user WHERE facebookId = ?';
-    var sql_insert_user = 'INSERT INTO user(facebookId) VALUES (?)';
+    var sql_select_user = 'SELECT * FROM user WHERE facebook_id = ?';
+    var sql_insert_user = 'INSERT INTO user(facebook_id) VALUES (?)';
 
     dbPool.getConnection(function(err, dbConn) {
        if (err) {
@@ -163,7 +165,6 @@ function findOrCreate(profile, callback) {
                         user.name = results[0].name;
                         user.email = results[0].email;
                         user.phone = results[0].phone;
-                        user.waytoserach = results[0].waytosearch;
                         return callback(null, user);
                     });
                 }
@@ -175,8 +176,8 @@ function findOrCreate(profile, callback) {
 
 // POST users/local 에서 회원을 등록할 때 사용되는 함수
 function registerUser(user, callback) {
-    var sql_insert_user = 'INSERT INTO user(email, password, name, phone, waytosearch, type) '+
-                          'VALUES(?, SHA2(?, 512), ?, ?, ?, ?)';
+    var sql_insert_user = 'INSERT INTO user(email, password, name, phone, type) '+
+                          'VALUES(?, SHA2(?, 512), ?, ?, ?)';
     var sql_insert_singer = 'INSERT INTO singer(user_id) VALUES (?)';
     var sql_insert_customer= 'INSERT INTO customer(user_id) VALUES (?)';
 
@@ -222,7 +223,7 @@ function registerUser(user, callback) {
         });
 
         function insertUser(cb) {
-            dbConn.query(sql_insert_user, [user.email, user.password, user.name, user.phone, user.waytosearch, user.type], function(err, result) {
+            dbConn.query(sql_insert_user, [user.email, user.password, user.name, user.phone, user.type], function(err, result) {
                 if (err) {
                     return cb(err);
                 }
@@ -255,7 +256,7 @@ function registerUser(user, callback) {
 // POST users/facebook/token 에서 회원가입을 할 때 호출되는 함수
 function registerUserFB(user, callback) {
     var sql_update_user = 'UPDATE user ' +
-                          'SET email = ?, name = ?, phone = ?, waytosearch = ?, type = ?  '+
+                          'SET email = ?, name = ?, phone = ?, type = ? '+
                           'WHERE id = ?';
     var sql_insert_singer = 'INSERT INTO singer(user_id) VALUES (?)';
     var sql_insert_customer= 'INSERT INTO customer(user_id) VALUES (?)';
@@ -302,7 +303,7 @@ function registerUserFB(user, callback) {
         });
 
         function updateUserInfo(cb) {
-                dbConn.query(sql_update_user, [user.email, user.name, user.phone, user.waytosearch, user.type, user.id], function(err, result) {
+                dbConn.query(sql_update_user, [user.email, user.name, user.phone, user.type, user.id], function(err, result) {
                     if (err) {
                         return cb(err);
                     }
@@ -352,25 +353,71 @@ function deleteUser(userId, callback) {
 
 // PUT /users/me에서 회원정보를 변경할 때 호출되는 함수
 function updateUser(user, callback) {
+    // var sql_update_user = 'UPDATE user ' +
+    //     'SET password = ?, name = ?, phone = ?, photoURL = ? '+
+    //     'WHERE id = ?';
+    console.log('updateUser 실행');
     var sql_update_user = 'UPDATE user ' +
-        'SET password = ?, name = ?, phone = ?, photoURL = ? '+
-        'WHERE id = ?';
+                          'SET password = sha2(?, 512), photoURL = ? WHERE id = ?';
+    var sql_select_filepath = 'SELECT photoURL FROM user WHERE id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
-
-        dbConn.query(sql_update_user, [user.password, user.name, user.phone, user.photoURL, user.id], function(err, result) {
-            dbConn.release();
-
+        dbConn.beginTransaction(function(err) {
             if (err) {
                 return callback(err);
             }
-            callback(null);
+
+            async.series([deleteFile, updateUserInfo], function(err) {
+                if (err) {
+                    return dbConn.rollback(function () {
+                        dbConn.release();
+                        callback(err);
+                    });
+                }
+                dbConn.commit(function () {
+                    callback(null, true);
+                    dbConn.release();
+                })
+            });
+
         });
+
+        function updateUserInfo(cb){
+            console.log('updateUserInfo 수행');
+            // dbConn.query(sql_update_user, [user.password, user.name, user.phone, user.photoURL, user.id], function(err, result) {
+            dbConn.query(sql_update_user, [user.password, user.file, user.id], function(err, result) {
+                if (err) {
+                    return cb(err);
+                }
+                cb(null, true);
+            });
+        }
+
+        function deleteFile(cb) {
+            console.log('deleteFIle 수행');
+            if(!user.file) return cb(null, true);
+
+            dbConn.query(sql_select_filepath, [user.id], function(err, results) {
+                if (err) {
+                    return cb(err);
+                }
+
+                results[0].photoURL = results[0].photoURL || '';
+
+                fs.unlink(results[0].photoURL, function(err) {
+                    if (err) {
+                        return cb(null);
+                    }
+                    cb(null, true);
+                });
+            });
+        }
     });
 }
+
 
 module.exports.findUser = findUser;
 module.exports.findUserByEmail = findUserByEmail;

@@ -2,14 +2,31 @@ var express = require('express');
 var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
+var Reservation = require('../models/reservation');
 
 // --------------------------------------------------
 // HTTP POST /reservations : 예약 신청하기
 // --------------------------------------------------
 router.post('/', isAuthenticated, function(req, res, next) {
+  var reservation = {};
+  reservation.place = req.body.place;
+  reservation.demand = req.body.demand || '';
+  reservation.r_dtime = req.body.reservation_dtime;
+  reservation.w_dtime = req.body.write_dtime;
+  reservation.sid = req.body.singer_id;
+  reservation.type = req.body.type;
+  reservation.song = req.body.song;
+  reservation.cid = req.user.id;
+  console.log(reservation.cid);
+  console.log('registerReservation 호출 바로 직전');
 
-  res.send({
-    message: '예약 신청이 정상적으로 처리되었습니다.'
+  Reservation.registerReservation(reservation, function(err) {
+    if (err) {
+      return next(err);
+    }
+    res.send({
+      message: '예약 신청이 정상적으로 처리되었습니다.'
+    });
   });
 
 });

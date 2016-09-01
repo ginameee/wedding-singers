@@ -50,6 +50,7 @@ app.use(passport.session());
 
 
 // 마운트포인트 매핑
+app.use('/images', express.static(path.join(__dirname, 'uploads/images/profiles')));
 app.use('/users', user);
 app.use('/customers', customer);
 app.use('/favorites', favorite);

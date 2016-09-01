@@ -19,7 +19,7 @@ router.get('/me', isAuthenticated, function(req, res, next) {
             return next(err);
         }
         res.send({
-            message: '동영상 조회가 정상적으로 처리되었습니다.',
+            code: 1,
             result: results
         });
     });
@@ -42,13 +42,13 @@ router.get('/', function(req, res, next) {
         search.composition = req.query.composition;
         search.hash = req.query.hash;
 
-    // TODO: 필터 적용해서 검색 가능하게 수정
+    // 필터 적용해서 검색 가능하게 수정
     // 사용자가 입력한 조건들을 모아놓은 객체를 이용해서 조건검색을 실시할 것임.
     Video.findVideoByFilter(search);
     
 
     res.send({
-        message: '동영상 검색이 정상적으로 처리되었습니다.',
+        code:1,
         rowCnt: rowCnt,
         pageNo: pageNo,
         search: search,
@@ -84,7 +84,7 @@ router.get('/main', function(req, res, next) {
             return next(err);
         }
         res.send({
-            message: '동영상 목록 조회가 정상적으로 처리되었습니다.',
+            code: 1,
             type: type,
             rowCnt: rowCnt,
             pageNo: pageNo,
@@ -113,7 +113,8 @@ router.post('/', isAuthenticated, function(req, res, next) {
         }
 
         res.send({
-            message: '동영상 게시가 정상적으로 처리되었습니다.'
+            code: 1,
+            result: '성공'
         });
     });
 });
@@ -136,20 +137,21 @@ router.put('/:vid', isAuthenticated, function(req, res, next) {
         }
 
         res.send({
-            message: '동영상 수정이 정상적으로 처리되었습니다.'
+            code: 1,
+            result: '성공'
         });
     });
 });
 
 
 // --------------------------------------------------
-// HTTP GET /videos/:vid : 동영상 보기
+// HTTP GET /videos/:vid : customer가 동영상 보기
 // --------------------------------------------------
 router.get('/:vid', function(req, res, next) {
     console.log(req.params.vid);
     Video.findVideoById(req.params.vid, function(err, result) {
         res.send({
-            message: '동영상 조회가 정상적으로 처리되었습니다.',
+            code: 1,
             result: result
         });
     });
@@ -170,7 +172,8 @@ router.delete('/:vid', isAuthenticated, function(req, res, next) {
         }
 
         res.send({
-            message: '동영상 삭제가 정상적으로 처리되었습니다'
+            code: 1,
+            result: '성공'
         });
 
     });

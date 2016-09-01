@@ -32,6 +32,7 @@ passport.use(new LocalStrategy({usernameField: 'email', passwordField: 'password
         if (!user) {
             return done(null, false);
         }
+        console.log({ user : user});
         // 2. 입력받은 password가 유효한 비밀번호인지 확인
         User.verifyPassword(password, user.password, function(err, result) {
             if (err) {
@@ -72,13 +73,13 @@ router.post('/local/login', isSecure, passport.authenticate('local'), function(r
         console.log('login failed');
     }
     var user = {};
+    user.email = req.user.id;
     user.email = req.user.email;
     user.name = req.user.name;
 
     res.send({
-        message: 'local login',
-        requestObj: req.user,
-        userObj: user
+        code: 1,
+        result: user
     });
 });
 
@@ -91,7 +92,23 @@ router.post('/facebook/token', isSecure, passport.authenticate('facebook-token')
         res.send('로그인실패!');
     }
     else {
-        res.send('로그인이 완료되었습니다');
+        var user = {};
+        user.id = req.user.id;
+        user.email = req.user.email || '최초 로그인(회원가입) 입니다';
+
+        if (!req.user.email) {
+            user.flag = 0;
+            res.send({
+                code: 3,
+                result: user
+            });
+        } else {
+            user.flag = 1;
+            res.send({
+                code: 1,
+                result: user
+            });
+        }
     }
 });
 
@@ -102,7 +119,8 @@ router.post('/facebook/token', isSecure, passport.authenticate('facebook-token')
 router.get('/logout', isSecure, isAuthenticated, function(req, res, next) {
     req.logout();
     res.send({
-        message: 'local logout'
+        code: 1,
+        result: "성공"
     });
 });
 

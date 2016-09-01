@@ -6,6 +6,8 @@ var User = require('../models/user');
 var Singer = require('../models/singer');
 var Customer = require('../models/customer');
 var async = require('async');
+var formidable = require('formidable');
+var path = require('path');
 
 // --------------------------------------------------
 // HTTPS POST /users/local : 회원가입(로컬)
@@ -17,7 +19,6 @@ router.post('/local', isSecure, function(req, res, next) {
   user.password = req.body.password;
   user.name = req.body.name;
   user.phone = req.body.phone;
-  user.waytosearch = req.body.waytosearch;
   user.type = parseInt(req.body.type);
   
   console.log(user);
@@ -37,7 +38,8 @@ router.post('/local', isSecure, function(req, res, next) {
           return next(err);
         }
         res.send({
-          message: '회원가입(로컬)이 정상적으로 처리되었습니다.'
+          code: 1,
+          result: '성공'
         });
       });
     }
@@ -55,8 +57,7 @@ router.post('/facebook/token', isSecure, isAuthenticated, function(req, res, nex
   user.id = parseInt(req.user.id);
   user.email = req.body.email || '';
   user.phone = req.body.phone;
-  user.name = req.body.name;  
-  user.waytosearch = req.body.waytosearch;
+  user.name = req.body.name;
   user.type = parseInt(req.body.type);
   console.log(user.email);
 
@@ -75,7 +76,8 @@ router.post('/facebook/token', isSecure, isAuthenticated, function(req, res, nex
           return next(err);
         }
         res.send({
-          message: '회원가입(연동)이 정상적으로 처리되었습니다.'
+          code: 1,
+          result: '성공'
         });
       });
     }
@@ -122,9 +124,11 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     user.name = result.name;
     user.email = result.email;
     user.point = result.point;
+    user.photoURL = 'http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(result.photoURL);
+    // user.photoURL = 'http://localhost:' + process.env.HTTP_PORT + '/images/'  + path.basename(result.photoURL);
 
     res.send({
-      message:'user mypage 조회가 정상적으로 처리되었습니다',
+      code: 1,
       result: user
     });
   });
@@ -135,19 +139,34 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
 // HTTPS PUT /users/me : 유저 정보 수정
 // --------------------------------------------------
 router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
+
   var user = {};
   user.id = req.user.id;
-  user.password = req.body.password;
-  user.name = req.body.name;
-  user.phone = req.body.phone;
-  user.photoURL = req.body.url;
+  // user.password = req.body.password;
+  // user.name = req.body.name;
+  // user.phone = req.body.phone;
+  // user.photoURL = req.body.url;
 
-  User.updateUser(user, function(err, result) {
+  var form = new formidable.IncomingForm();
+  //form.uploadDir = path.join(__dirname);
+  form.uploadDir = path.join(__dirname, '../uploads/images/profiles');
+  form.keepExtensions = true;
+  form.parse(req, function(err, fields, files) {
     if (err) {
       return next(err);
     }
-    res.send({
-      message: 'user 프로필 변경이 정상적으로 처리되었습니다.'
+
+    user.password = fields.password;
+    if(files.photo) user.file = files.photo.path;
+
+    User.updateUser(user, function(err, result) {
+      if (err) {
+        return next(err);
+      }
+      res.send({
+        code: 1,
+        result: '성공'
+      });
     });
   });
 });
