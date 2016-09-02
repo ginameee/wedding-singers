@@ -9,7 +9,6 @@ function isAuthenticated(req, res, next) {
         });
     }
     next();
-
 }
 
 function isSecure(req, res, next) {
