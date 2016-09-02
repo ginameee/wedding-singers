@@ -21,7 +21,8 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
     Singer.updateSinger(singer, function(err, result) {
         if (err) return next(err);
         res.send({
-            message: 'Singer 프로필 수정이 정상적으로 처리되었습니다.'
+            code: 1,
+            result: '성공'
         });
     });
 });
