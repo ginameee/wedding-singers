@@ -107,10 +107,3 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
-
-process.on('uncaughtException', function(err) {
-  if (err) {
-    console.log(err);
-  }
-});
-
