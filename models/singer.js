@@ -4,30 +4,85 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
 var path = require('path');
-
+// HTTPS PUT /singers/me 요청에서 Singer 프로필 수정 시 수행되는 함수
 function updateSinger(singer, callback) {
     var sql_update_singer = 'UPDATE singer ' +
                             'SET comment = ?, description = ?, standard_price = ?, special_price = ?, ' +
                             'composition = ?, theme = ? ' +
                             'WHERE user_id = ?';
+    var sql_select_singer_song = 'SELECT id, song FROM singer_song WHERE singer_user_id = ?';
+    var sql_insert_singer_song = 'INSERT INTO singer_song(song, singer_user_id) VALUES(?, ?)';
+    var sql_delete_singer_song = 'DELETE FROM singer_song WHERE singer_user_id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql_update_singer, [singer.comment, singer.description, singer.standard_price, singer.special_price, singer.composition, singer.theme, singer.user_id], function(err, result) {
-            dbConn.release();
+
+        dbConn.beginTransaction(function(err) {
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
-            callback(null, result);
+
+            async.series([updateSingerInfo, updateSingerSong], function(err) {
+                if (err) {
+                    return dbConn.rollback(function () {
+                        callback(err);
+                    });
+                }
+                dbConn.commit(function () {
+                    callback(null, true);
+                })
+            });
+
         });
+
+        function updateSingerInfo(cb) {
+            dbConn.query(sql_update_singer, [singer.comment, singer.description, singer.standard_price, singer.special_price, singer.composition, singer.theme, singer.user_id], function(err, result) {
+                dbConn.release();
+                if (err) {
+                    return cb(err);
+                }
+                cb(null, result);
+            });
+        }
+
+        function updateSingerSong(cb) {
+            dbConn.query(sql_select_singer_song, [singer.user_id], function(err, results) {
+                if (err) {
+                    return cb(err);
+                }
+
+                if (results.length !== 0 ) {
+                    dbConn.query(sql_delete_singer_song, [singer.user_id], function(err, result) {
+                        if (err) {
+                            return cb(err);
+                        }
+                    });
+                }
+
+                async.each(singer.songs, function (item, done) {
+                    dbConn.query(sql_insert_singer_song, [item, singer.user_id], function(err, result) {
+                        if (err) {
+                            return done(err);
+                        }
+                        done(null);
+                    })
+                }, function(err) {
+                    if (err) {
+                        return cb(err);
+                    }
+                    cb(null);
+                });
+            });
+        }
     });
 }
 
-
+// HTTPS GET /singers/me 요청에서 Singer가 자신의 마이페이지 조회 시 수행되는 함수
 function findSingerById(id, callback) {
     var sql_select_singer = 'SELECT * FROM user u JOIN singer s ON (s.user_id = u.id) WHERE u.id = ?';
-    var sql_select_songs = 'SELECT * FROM singer_song WHERE singer_user_id = ?';
+    var sql_select_songs = 'SELECT song title FROM singer_song WHERE singer_user_id = ?';
 
     var singer = {};
 
@@ -82,7 +137,7 @@ function findSingerById(id, callback) {
     });
 }
 
-
+// HTTP GET /singers/me/holidaies 요청에서 Singer 휴일 조회 시 수행되는 함수
 function findSingerHolidaies(userId, callback) {
     var sql_select_holiday = 'SELECT LEFT(DATE(CONVERT_TZ(holiday, \'+00:00\', \'+09:00\')), 10) holiday FROM singer_holiday ' +
                               'WHERE singer_user_id = ?';
@@ -104,7 +159,7 @@ function findSingerHolidaies(userId, callback) {
     });
 }
 
-
+// HTTP PUT /singers/me/holidaies 요청에서 Singer 휴일 변경 시 수행되는 함수
 function updateSingerHolidaies(singer, callback) {
     var sql_insert_holiday = 'INSERT INTO singer_holiday(holiday, singer_user_id) ' +
                               'VALUES (str_to_date(?, \'%Y-%m-%d\'), ?)';

@@ -7,6 +7,10 @@ var async = require('async');
 // HTTP GET /videos/me 에서 싱어가 자신이 게시한 동영상을 찾을 때 사용되는 함수
 function findVideoByUserId(uid, callback) {
     var sql_select_video = 'SELECT * FROM video WHERE singer_user_id = ?';
+    var sql_select_video_hash = 'SELECT tag FROM video_hash WHERE video_id = ?';
+    console.log('findVideoByUserId 호출');
+
+    var videos = [];
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -14,12 +18,33 @@ function findVideoByUserId(uid, callback) {
         }
 
         dbConn.query(sql_select_video, [uid], function(err, results) {
-            dbConn.release();
-
+            console.log('쿼리문 수행');
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
-            callback(null, results);
+
+            async.each(results, function(item, done) {
+                console.log('이치쿼리문수행');
+                dbConn.query(sql_select_video_hash, [item.id],function(err, results) {
+                    if (err) {
+                        dbConn.release();
+                        return done(err);
+                    }
+                    item.hash = results;
+                    videos.push(item);
+                    done(null);
+                });
+            }, function(err) {
+                console.log('done 콜백 수행');
+                if (err) {
+                    dbConn.release();
+                    return callback(err);
+                }
+                console.log({ videos: videos});
+                callback(null, videos);
+                dbConn.release();
+            });
         });
     });
 }
@@ -195,7 +220,7 @@ function listVideo(pageNo, rowCnt, callback) {
 // HTTP DELETE /videos/:vid 에서 호출할 동영상을 지우는 함수
 function deleteVideo(vid, callback) {
 
-    // TODO: dbConn 객체 얻어오기
+    // dbConn 객체 얻어오기
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);

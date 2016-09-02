@@ -130,7 +130,7 @@ function findOrCreate(profile, callback) {
            return callback(err);
        }
 
-        dbConn.beginTransaction(function (err) {
+        dbConn.beginTransaction(function(err) {
            if (err) {
                return callback(err);
            }
