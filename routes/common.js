@@ -4,7 +4,8 @@
 function isAuthenticated(req, res, next) {
     if (!req.user) {
         return res.status(401).send({
-            message: 'login required'
+            code: 2,
+            result: '로그인이 필요합니다'
         });
     }
     next();
@@ -14,7 +15,8 @@ function isAuthenticated(req, res, next) {
 function isSecure(req, res, next) {
     if (!req.secure) {
         return res.status(426).send({
-            message: 'https로!!'
+            code: 2,
+            result: 'HTTPS 통신이 필요합니다.'
         });
     }
     next();
