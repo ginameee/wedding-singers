@@ -4,6 +4,7 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
 var path = require('path');
+
 // HTTPS PUT /singers/me 요청에서 Singer 프로필 수정 시 수행되는 함수
 function updateSinger(singer, callback) {
     var sql_update_singer = 'UPDATE singer ' +
@@ -13,6 +14,7 @@ function updateSinger(singer, callback) {
     var sql_select_singer_song = 'SELECT id, song FROM singer_song WHERE singer_user_id = ?';
     var sql_insert_singer_song = 'INSERT INTO singer_song(song, singer_user_id) VALUES(?, ?)';
     var sql_delete_singer_song = 'DELETE FROM singer_song WHERE singer_user_id = ?';
+
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -24,37 +26,38 @@ function updateSinger(singer, callback) {
                 return callback(err);
             }
 
-            async.series([updateSingerInfo, updateSingerSong], function(err) {
+            async.series([registerSingerInfo, registerSingerSong], function(err) {
                 if (err) {
                     return dbConn.rollback(function () {
+                        dbConn.release();
                         callback(err);
                     });
                 }
                 dbConn.commit(function () {
-                    callback(null, true);
+                    dbConn.release();
+                    callback(null);
                 })
             });
 
         });
 
-        function updateSingerInfo(cb) {
-            dbConn.query(sql_update_singer, [singer.comment, singer.description, singer.standard_price, singer.special_price, singer.composition, singer.theme, singer.user_id], function(err, result) {
-                dbConn.release();
+        function registerSingerInfo(cb) {
+            dbConn.query(sql_update_singer, [singer.comment, singer.description, singer.standard_price, singer.special_price, singer.composition, singer.theme, singer.user_id], function(err) {
                 if (err) {
                     return cb(err);
                 }
-                cb(null, result);
+                cb(null);
             });
         }
 
-        function updateSingerSong(cb) {
+        function registerSingerSong(cb) {
             dbConn.query(sql_select_singer_song, [singer.user_id], function(err, results) {
                 if (err) {
                     return cb(err);
                 }
 
                 if (results.length !== 0 ) {
-                    dbConn.query(sql_delete_singer_song, [singer.user_id], function(err, result) {
+                    dbConn.query(sql_delete_singer_song, [singer.user_id], function(err) {
                         if (err) {
                             return cb(err);
                         }
@@ -62,7 +65,7 @@ function updateSinger(singer, callback) {
                 }
 
                 async.each(singer.songs, function (item, done) {
-                    dbConn.query(sql_insert_singer_song, [item, singer.user_id], function(err, result) {
+                    dbConn.query(sql_insert_singer_song, [item, singer.user_id], function(err) {
                         if (err) {
                             return done(err);
                         }
@@ -79,6 +82,7 @@ function updateSinger(singer, callback) {
     });
 }
 
+
 // HTTPS GET /singers/me 요청에서 Singer가 자신의 마이페이지 조회 시 수행되는 함수
 function findSingerById(id, callback) {
     var sql_select_singer = 'SELECT * FROM user u JOIN singer s ON (s.user_id = u.id) WHERE u.id = ?';
@@ -91,7 +95,7 @@ function findSingerById(id, callback) {
             return callback(err);
         }
 
-        async.parallel([selectSinger, selectSingerSongs], function(err, result) {
+        async.parallel([selectSinger, selectSingerSongs], function(err) {
             if (err) {
                 return callback(err);
             }
@@ -120,7 +124,7 @@ function findSingerById(id, callback) {
                 singer.penalty = parseInt(results[0].penalty);
                 singer.photoURL = 'http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(results[0].photoURL);
 
-                cb(null, true);
+                cb(null);
             });
         }
 
@@ -136,6 +140,7 @@ function findSingerById(id, callback) {
         }
     });
 }
+
 
 // HTTP GET /singers/me/holidaies 요청에서 Singer 휴일 조회 시 수행되는 함수
 function findSingerHolidaies(userId, callback) {
@@ -159,8 +164,9 @@ function findSingerHolidaies(userId, callback) {
     });
 }
 
+
 // HTTP PUT /singers/me/holidaies 요청에서 Singer 휴일 변경 시 수행되는 함수
-function updateSingerHolidaies(singer, callback) {
+function registerSingerHolidaies(singer, callback) {
     var sql_insert_holiday = 'INSERT INTO singer_holiday(holiday, singer_user_id) ' +
                               'VALUES (str_to_date(?, \'%Y-%m-%d\'), ?)';
     var sql_select_holiday = 'SELECT * FROM singer_holiday ' +
@@ -188,7 +194,7 @@ function updateSingerHolidaies(singer, callback) {
                    //      }
                    //      return cb(null, result);
                    // });
-                    return cb(null, true);
+                    return cb(null);
                 } else {
                     dbConn.query(sql_insert_holiday,[item, singer.user_id], function(err, result) {
                         if (err) {
@@ -201,7 +207,7 @@ function updateSingerHolidaies(singer, callback) {
             });
         });
         dbConn.release();
-        callback(null, true);
+        callback(null);
     });
 }
 
@@ -209,4 +215,4 @@ function updateSingerHolidaies(singer, callback) {
 module.exports.updateSinger = updateSinger;
 module.exports.findSingerById = findSingerById;
 module.exports.findSingerHolidaies =  findSingerHolidaies;
-module.exports.updateSingerHolidaies = updateSingerHolidaies;
+module.exports.registerSingerHolidaies = registerSingerHolidaies;

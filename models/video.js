@@ -105,6 +105,7 @@ function updateVideo(video, callback) {
                     });
                 }
                 dbConn.commit(function () {
+                    dbConn.release();
                     callback(null, true);
                 });
             });
@@ -114,7 +115,6 @@ function updateVideo(video, callback) {
             var sql_update_video = 'UPDATE video SET title = ?, url = ? WHERE id = ?';
 
             dbConn.query(sql_update_video, [video.title, video.url, video.id], function(err, result) {
-                dbConn.release();
                 if (err) {
                     return cb(err);
                 }

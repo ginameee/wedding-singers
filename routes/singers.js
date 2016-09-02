@@ -78,7 +78,7 @@ router.put('/me/holidaies', isAuthenticated, function(req, res, next) {
     singer.user_id = req.user.id;
     singer.update_dates = req.body.update_dates;
 
-    Singer.updateSingerHolidaies(singer, function(err, results) {
+    Singer.registerSingerHolidaies(singer, function(err, results) {
         if (err) return next(err);
         res.send({
             code: 1,
