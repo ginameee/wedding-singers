@@ -72,6 +72,7 @@ router.post('/local/login', isSecure, passport.authenticate('local'), function(r
     if (!req.user) {
         console.log('login failed');
     }
+
     var user = {};
     user.email = req.user.id;
     user.email = req.user.email;

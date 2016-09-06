@@ -27,7 +27,7 @@ router.get('/me', isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
-// HTTP GET /videos?theme=3&location=2&s_workday='2016-05-32'&e_workday='2016-05-32'&price=””&composition=””&hash=””&pageNo=””&rowCnt=”” : 동영상 검색
+// HTTP GET /videos?theme=3&location=2&start_date='2016-05-32'&end_date='2016-05-32'&price=””&composition=””&hash=””&pageNo=””&rowCnt=”” : 동영상 검색
 // --------------------------------------------------
 router.get('/', function(req, res, next) {
     var rowCnt = req.query.rowCnt || 0;
@@ -36,8 +36,8 @@ router.get('/', function(req, res, next) {
     var search = {};
         search.theme =  req.query.theme;
         search.location = req.query.location;
-        search.s_workday = req.query.s_workday;
-        search.e_workday = req.query.e_workday;
+        search.start_date= req.query.start_date;
+        search.end_date = req.query.end_date;
         search.price = req.query.price;
         search.composition = req.query.composition;
         search.hash = req.query.hash;

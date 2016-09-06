@@ -20,7 +20,8 @@ router.post('/local', isSecure, function(req, res, next) {
   user.name = req.body.name;
   user.phone = req.body.phone;
   user.type = parseInt(req.body.type);
-  
+  user.registration_token = req.body.registration_token;
+
   console.log(user);
 
   User.findUserByEmail(user.email, function(err, result) {
@@ -44,7 +45,6 @@ router.post('/local', isSecure, function(req, res, next) {
       });
     }
   });
-
 });
 
 
@@ -60,7 +60,6 @@ router.post('/facebook/token', isSecure, isAuthenticated, function(req, res, nex
   user.name = req.body.name;
   user.type = parseInt(req.body.type);
   user.registration_token = req.body.registration_token;
-  console.log(user.email);
 
   User.findUserByEmail(user.email, function(err, result) {
     if (err) {
@@ -125,7 +124,7 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     user.name = result.name;
     user.email = result.email;
     user.point = result.point;
-    user.photoURL = 'http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(result.photoURL);
+    user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(result.photoURL);
     if (!path.basename(result.photoURL)) {
       user.photoURL = '';
     }

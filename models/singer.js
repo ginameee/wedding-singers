@@ -84,6 +84,7 @@ function updateSinger(singer, callback) {
 
 
 // HTTPS GET /singers/me 요청에서 Singer가 자신의 마이페이지 조회 시 수행되는 함수
+// HTTP GET /singers/:sid : Singer 프로필 조회
 function findSingerById(id, callback) {
     var sql_select_singer = 'SELECT * FROM user u JOIN singer s ON (s.user_id = u.id) WHERE u.id = ?';
     var sql_select_songs = 'SELECT song title FROM singer_song WHERE singer_user_id = ?';

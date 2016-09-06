@@ -25,7 +25,8 @@ router.post('/', isAuthenticated, function(req, res, next) {
       return next(err);
     }
     res.send({
-      message: '예약 신청이 정상적으로 처리되었습니다.'
+      code: 1,
+      result: '성공'
     });
   });
 
@@ -50,15 +51,28 @@ router.put('/', isAuthenticated, function(req, res, next) {
 router.get('/', isAuthenticated, function(req, res, next) {
 
   // if (req.url.match(/\?pageNo=\d+&rowCnt=\d+/i)) { // 주문 목록 조회 req.url: /?pageNo=1&rowCount=10
-  if (req.query.pageNo || req.query.rowCnt ) {
-    var pageNo = parseInt(req.query.pageNo, 10) || 1;
-    var rowCnt = parseInt(req.query.rowCnt, 10) || 1;
-  }
+  // if (req.query.pageNo || req.query.rowCnt ) {
+  //   var pageNo = parseInt(req.query.pageNo, 10) || 1;
+  //   var rowCnt = parseInt(req.query.rowCnt, 10) || 1;
+  // }
+
+  var user_id = req.user.id;
+
+  Reservation.findReservationByUser(user_id, function(err, results) {
+    if (err) {
+      return callback(err);
+    }
+
+    res.send({
+      code: 1,
+      result: results
+    });
+  });
 
   res.send({
     message: '예약 목록 조회가 정상적으로 처리되었습니다.',
-    pageNo: pageNo,
-    rowCnt: rowCnt,
+    // pageNo: pageNo,
+    // rowCnt: rowCnt,
     result: [
       {
         idx: 1,

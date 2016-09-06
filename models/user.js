@@ -27,7 +27,6 @@ function findUser(id, callback) {
                 photoURL : results[0].photoURL,
                 registration_token : results[0].registration_token
             };
-
             callback (null, user);
         });
     });
@@ -92,25 +91,22 @@ function findUserByEmail(email, callback) {
 }
 
 
-// POST auth/local/login 에서 비밀번호 확인을 위해서 사용되는 함수
 function verifyPassword(password, db_password, callback) {
-    var sql_select_user_password = 'SELECT * FROM user WHERE password = SHA2(?, 512)';
+    var sql = 'SELECT sha2(?, 512) password';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql_select_user_password, [password], function(err, results) {
+
+        dbConn.query(sql, [password], function(err, results) {
             dbConn.release();
-            console.log(results);
             if (err) {
                 return callback(err);
             }
-
-            if (results.length === 0) {
-                return callback(null, null);
+            if (results[0].password !== db_password) {
+                return callback(null, false);
             }
-
-            return callback(null, true);
+            callback(null, true);
         });
     });
 }
@@ -176,8 +172,8 @@ function findOrCreate(profile, callback) {
 
 // POST users/local 에서 회원을 등록할 때 사용되는 함수
 function registerUser(user, callback) {
-    var sql_insert_user = 'INSERT INTO user(email, password, name, phone, type) '+
-                          'VALUES(?, SHA2(?, 512), ?, ?, ?)';
+    var sql_insert_user = 'INSERT INTO user(email, password, name, phone, type, registration_token) '+
+                          'VALUES(?, SHA2(?, 512), ?, ?, ?, ?)';
     var sql_insert_singer = 'INSERT INTO singer(user_id) VALUES (?)';
     var sql_insert_customer= 'INSERT INTO customer(user_id) VALUES (?)';
 
@@ -223,7 +219,7 @@ function registerUser(user, callback) {
         });
 
         function insertUser(cb) {
-            dbConn.query(sql_insert_user, [user.email, user.password, user.name, user.phone, user.type], function(err, result) {
+            dbConn.query(sql_insert_user, [user.email, user.password, user.name, user.phone, user.type, user.registration_token], function(err, result) {
                 if (err) {
                     return cb(err);
                 }
