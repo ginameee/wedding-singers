@@ -29,27 +29,17 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
-// HTTPS GET /singers/me : Singer가 자신의 마이페이지 조회
-// --------------------------------------------------
-router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
-    var sid = req.user.id;
-
-    Singer.findSingerById(sid, function(err, results) {
-        if (err) return next(err);
-
-        res.send({
-            code: 1,
-            result: results
-        });
-    });
-});
-
-
-// --------------------------------------------------
 // HTTP GET /singers/me/holidaies : Singer 휴일 조회
 // --------------------------------------------------
-router.get('/me/holidaies', isAuthenticated, function(req, res, next) {
-    var userId = req.user.id;
+router.get('/:sid/holidaies', isAuthenticated, function(req, res, next) {
+    var userId;
+
+    if (req.params.sid == 'me') {
+        userId = req.user.id;
+    } else {
+        userId = req.params.sid;
+    }
+
     console.log(userId);
     var holidaies = [];
 
@@ -93,18 +83,42 @@ router.put('/me/holidaies', isAuthenticated, function(req, res, next) {
 // HTTP GET /singers/:sid : Singer 프로필 조회
 // --------------------------------------------------
 router.get('/:sid', function(req, res, next) {
-    var sid = req.params.sid;
+    var singer = {};
 
-    Singer.findSingerById(sid, function(err, results) {
+    if (req.params.sid == 'me') {
+        singer.user_id = req.user.id
+    } else {
+        singer.user_id = req.params.sid;
+    }
+
+    singer.simple = parseInt(req.query.simple || 0);
+
+    Singer.findSingerById(singer.user_id, function(err, result) {
         if (err) return next(err);
+
+        if (!singer.simple) {
+            singer = result
+        } else {
+            singer.name = result.name;
+            singer.comment = result.comment;
+            singer.photoURL = result.photoURL;
+        }
 
         res.send({
             code: 1,
-            result: results
+            result: singer
         });
     });
-});
 
+    // Singer.findSingerById(sid, function(err, results) {
+    //     if (err) return next(err);
+    //
+    //     res.send({
+    //         code: 1,
+    //         result: results
+    //     });
+    // });
+});
 
 
 // --------------------------------------------------
@@ -138,6 +152,30 @@ router.get('/:sid', function(req, res, next) {
 //     });
 // });
 
-
+// --------------------------------------------------
+// HTTPS GET /singers/me : Singer가 자신의 마이페이지 조회
+// --------------------------------------------------
+// router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
+//     var singer = {};
+//     singer.user_id = req.user.id;
+//     singer.simple = parseInt(req.query.simple || 0);
+//
+//     Singer.findSingerById(singer.user_id, function(err, result) {
+//         if (err) return next(err);
+//
+//         if (!singer.simple) {
+//             singer = result
+//         } else {
+//             singer.name = result.name;
+//             singer.comment = result.comment;
+//             singer.photoURL = result.photoURL;
+//         }
+//
+//         res.send({
+//             code: 1,
+//             result: singer
+//         });
+//     });
+// });
 
 module.exports = router;

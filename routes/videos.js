@@ -30,8 +30,8 @@ router.get('/me', isAuthenticated, function(req, res, next) {
 // HTTP GET /videos?theme=3&location=2&start_date='2016-05-32'&end_date='2016-05-32'&price=””&composition=””&hash=””&pageNo=””&rowCnt=”” : 동영상 검색
 // --------------------------------------------------
 router.get('/', function(req, res, next) {
-    var rowCnt = req.query.rowCnt || 0;
-    var pageNo = req.query.pageNo || 1;
+    // var rowCnt = req.query.rowCnt || 0;
+    // var pageNo = req.query.pageNo || 1;
 
     var search = {};
         search.theme =  req.query.theme;
@@ -49,8 +49,8 @@ router.get('/', function(req, res, next) {
 
     res.send({
         code:1,
-        rowCnt: rowCnt,
-        pageNo: pageNo,
+        // rowCnt: rowCnt,
+        // pageNo: pageNo,
         search: search,
         result: [
             {
@@ -76,18 +76,18 @@ router.get('/', function(req, res, next) {
 router.get('/main', function(req, res, next) {
     // 동영상을 검색할 때,
     var type = parseInt(req.query.type) || 1;
-    var rowCnt = parseInt(req.query.rowCnt) || 1;
-    var pageNo = parseInt(req.query.pageNo) || 1;
+    // var rowCnt = parseInt(req.query.rowCnt) || 1;
+    // var pageNo = parseInt(req.query.pageNo) || 1;
 
-    Video.listVideo(pageNo, rowCnt, function(err, videos) {
+    Video.listVideo(function(err, videos) {
         if (err) {
             return next(err);
         }
         res.send({
             code: 1,
             type: type,
-            rowCnt: rowCnt,
-            pageNo: pageNo,
+            // rowCnt: rowCnt,
+            // pageNo: pageNo,
             result: videos
         });
     });

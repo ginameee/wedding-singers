@@ -9,6 +9,7 @@ var Reservation = require('../models/reservation');
 // --------------------------------------------------
 router.post('/', isAuthenticated, function(req, res, next) {
   var reservation = {};
+  reservation.cid = req.user.id;
   reservation.place = req.body.place;
   reservation.demand = req.body.demand || '';
   reservation.r_dtime = req.body.reservation_dtime;
@@ -16,7 +17,6 @@ router.post('/', isAuthenticated, function(req, res, next) {
   reservation.sid = req.body.singer_id;
   reservation.type = req.body.type;
   reservation.song = req.body.song;
-  reservation.cid = req.user.id;
   console.log(reservation.cid);
   console.log('registerReservation 호출 바로 직전');
 
@@ -46,9 +46,9 @@ router.put('/', isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
-// HTTP GET /reservations : 예약 목록 조회
+// HTTP GET /reservations/me : 예약 목록 조회
 // --------------------------------------------------
-router.get('/', isAuthenticated, function(req, res, next) {
+router.get('/me', isAuthenticated, function(req, res, next) {
 
   // if (req.url.match(/\?pageNo=\d+&rowCnt=\d+/i)) { // 주문 목록 조회 req.url: /?pageNo=1&rowCount=10
   // if (req.query.pageNo || req.query.rowCnt ) {
@@ -56,9 +56,8 @@ router.get('/', isAuthenticated, function(req, res, next) {
   //   var rowCnt = parseInt(req.query.rowCnt, 10) || 1;
   // }
 
-  var user_id = req.user.id;
 
-  Reservation.findReservationByUser(user_id, function(err, results) {
+  Reservation.findReservationByUser(req.user, function(err, results) {
     if (err) {
       return callback(err);
     }
@@ -68,27 +67,6 @@ router.get('/', isAuthenticated, function(req, res, next) {
       result: results
     });
   });
-
-  res.send({
-    message: '예약 목록 조회가 정상적으로 처리되었습니다.',
-    // pageNo: pageNo,
-    // rowCnt: rowCnt,
-    result: [
-      {
-        idx: 1,
-        place: '인천',
-        reservation_dtime: '2015-05-31',
-        song: 'love song'
-      },
-      {
-        idx: 2,
-        place: '대전',
-        reservation_dtime: '2015-02-31',
-        song: '다행이다'
-      }
-    ]
-  });
-
 });
 
 

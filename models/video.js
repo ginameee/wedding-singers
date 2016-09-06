@@ -70,7 +70,8 @@ function findVideoById(id, callback) {
             video.favorite_cnt = results[0].favorite_cnt;
             video.url = results[0].url;
             video.write_dtime = results[0].write_dtime;
-            video.user_name = results[0].user_name;
+            video.singer_name = results[0].name;
+            video.singer_id = results[0].singer_user_id;
 
             callback(null, video);
         });
@@ -213,7 +214,7 @@ function insertVideo(video, callback) {
 }
 
 
-function listVideo(pageNo, rowCnt, callback) {
+function listVideo(callback) {
     callback(null, true);
 }
 
