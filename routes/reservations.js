@@ -12,7 +12,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
   reservation.cid = req.user.id;
   reservation.place = req.body.place;
   reservation.demand = req.body.demand || '';
-  reservation.r_dtime = req.body.reservation_dtime;
+  reservation.r_dtime = req.body.reservation_date + " " + req.body.reservation_time + ":00";
   reservation.w_dtime = req.body.write_dtime;
   reservation.sid = req.body.singer_id;
   reservation.type = req.body.type;
@@ -56,10 +56,12 @@ router.get('/me', isAuthenticated, function(req, res, next) {
   //   var rowCnt = parseInt(req.query.rowCnt, 10) || 1;
   // }
 
+  var user = req.user;
+  user.tab = parseInt(req.query.tab || 1);
 
-  Reservation.findReservationByUser(req.user, function(err, results) {
+  Reservation.findReservationListOfUser(user, function(err, results) {
     if (err) {
-      return callback(err);
+      return next(err);
     }
 
     res.send({
@@ -73,18 +75,19 @@ router.get('/me', isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 // HTTP GET /reservations/:id : 예약 상세 보기
 // --------------------------------------------------
-router.get('/:id', isAuthenticated, function(req, res, next) {
+router.get('/:rid', isAuthenticated, function(req, res, next) {
 
-  res.send({
-    message: '예약 상세 보기가 정상적으로 처리되었습니다.',
-    result: {
-      singer_name: '이장춘',
-      place: '인천 춘 예식장',
-      reservation_dtime: '2015-05-31 09:00:00',
-      song: '나 항상 그대를',
-      demand: '춤도 춰주세요!',
-      price: 300000
+  var user = req.user;
+  user.reservation_id = req.params.rid;
+  
+  Reservation.findReservationById(user, function(err, result) {
+    if (err) {
+      return next(err);
     }
+    res.send({
+      code: 1,
+      result: result
+    });
   });
 
 });

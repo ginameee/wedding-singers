@@ -2,7 +2,7 @@
  * Created by Tacademy on 2016-08-25.
  */
 var dbPool = require('../models/common').dbPool;
-
+var async = require('async');
 
 // 예약을 등록할 때 사용하는 함수
 function registerReservation(reservation, callback) {
@@ -25,10 +25,10 @@ function registerReservation(reservation, callback) {
 
 
 // 자신의 예약목록을 확인하고자 할때 사용하는 함수
-function findReservationByUser(user, callback) {
+function findReservationListOfUser(user, callback) {
     var reservation = {};
-    var sql_select_customer_reservation = 'SELECT * FROM reservation WHERE customer_user_id = ?';
-    var sql_select_singer_reservation = 'SELECT * FROM reservation WHERE singer_user_id = ?';
+    var sql_select_all_reservation = 'SELECT * FROM reservation WHERE customer_user_id = ? or singer_user_id = ?';
+    var sql_select_completed_reservation = 'SELECT * FROM reservation WHERE (customer_user_id = ? or singer_user_id = ?) AND status = 30';
     var sql_user_info = 'SELECT name, photoURL FROM user WHERE id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
@@ -36,67 +36,124 @@ function findReservationByUser(user, callback) {
             return callback(err);
         }
 
-        if (user.type === 1) {
-            reservation.singer_id = user.id;
-            reservation.singer_name = user.name;
-            reservation.singer_photoURL = user.photoURL;
+        var sql_select_reservation;
+        if (user.tab === 1) sql_select_reservation = sql_select_all_reservation;
+        else sql_select_reservation = sql_select_completed_reservation;
+        console.log(sql_select_reservation);
 
-            dbConn.query(sql_select_singer_reservation, [user.id], function(err, results) {
+
+        dbConn.query(sql_select_reservation, [user.id, user.id], function(err, results) {
+            console.log('예약 select 쿼리문 수행');
+            if (err) {
+                dbConn.release();
+                return callback(err);
+            }
+
+            console.log('map 수행 바로 직전');
+            async.map(results, addUserInfo, function(err, results) {
+                console.log('map 수행완료');
+                dbConn.release();
                 if (err) {
-                    dbConn.release();
                     return callback(err);
                 }
-
-                reservation.id = results[0].id;
-                reservation.place = results[0].place;
-                reservation.song = results[0].song;
-                reservation.customer_id = results[0].customer_user_id;
-
-                dbConn.query(sql_user_info, [reservation.customer_id], function(err, results) {
-                    if (err) {
-                        dbConn.release();
-                        return callback(err);
-                    }
-
-                    reservation.customer_name = results[0].name;
-                    reservation.customer_photoURL = results[0].photoURL;
-                    dbConn.release();
-                    callback(null, reservation);
-                });
-
+                callback(null, results);
             });
-        } else {
-            reservation.customer_id = user.id;
-            reservation.customer_name = user.name;
-            reservation.customer_photoURL = user.photoURL;
+        });
 
-            dbConn.query(sql_select_customer_reservation, [user.id], function(err, results) {
+        function addUserInfo(item, cb) {
+            console.log('map 수행 중');
+            var param1 = 'customer';
+            var param2 = 'singer';
+            // 싱어일 때
+            if (user.type === 1) {
+                param1 = 'singer';
+                param2 = 'customer';
+            }
+
+            item[param1+'_name'] = user.name;
+            item[param1+'_photoURL'] = user.photoURL;
+
+            dbConn.query(sql_user_info, [item[param2+'_user_id']], function(err, results) {
                 if (err) {
-                    dbConn.release();
-                    return callback(err);
+                    return cb(err);
                 }
+                item[param2+'_name'] = results[0].name;
+                item[param2+'_photoURL'] = results[0].photoURL;
+                console.log(item);
 
-                reservation.id = results[0].id;
-                console.log(reservation.id);
-                reservation.place = results[0].place;
-                console.log(reservation.place);
-                reservation.song = results[0].song;
-                reservation.singer_id = results[0].singer_user_id;
-
-                dbConn.query(sql_user_info, [reservation.singer_id], function(err, results) {
-                    if (err) {
-                        dbConn.release();
-                        return callback(err);
-                    }
-
-                    reservation.singer_name = results[0].name;
-                    reservation.singer_photoURL = results[0].photoURL;
-                    dbConn.release();
-                    callback(null, reservation);
-                });
+                cb(null, item);
             });
         }
     });
 }
+
+
+function findReservationById(user, callback) {
+    var sql_select_reservation = 'SELECT r.id id, place, demand, reservation_dtime, write_dtime, payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song, special_price, standard_price ' +
+                                  'FROM reservation r JOIN singer s ON (r.singer_user_id = s.user_id) ' +
+                                  'WHERE id = ?';
+    var sql_user_info = 'SELECT name, photoURL FROM user WHERE id = ?';
+
+    var reservation = {};
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+
+        dbConn.query(sql_select_reservation, [user.reservation_id], function(err, results) {
+
+            if (err) {
+                dbConn.release();
+                return callback(err);
+            }
+
+            reservation.singer_id = results[0].singer_user_id;
+            reservation.customer_id = results[0].customer_user_id;
+            reservation.place = results[0].place;
+            reservation.demand = results[0].demand;
+            reservation.song = results[0].song;
+            reservation.type = results[0].type;
+
+            if (user.type === 1) {
+                console.log('싱어일때');
+                reservation.singer_name = user.name;
+                reservation.singer_photoURL = user.photoURL;
+
+                dbConn.query(sql_user_info, [reservation.customer_id], function(err, results) {
+                    dbConn.release();
+                    if (err) {
+                        return callback(err);
+                    }
+                    reservation.customer_name = results[0].name;
+                    reservation.customer_photoURL = results[0].photoURL;
+                    return callback(null, reservation);
+
+                });
+            } else {
+                console.log('유저일때');
+                reservation.customer_name = user.name;
+                reservation.customer_photoURL = user.photoURL;
+
+                dbConn.query(sql_user_info, [reservation.singer_id], function(err, results) {
+                    console.log('sql_user_info');
+                    console.log(reservation.singer_id);
+                    dbConn.release();
+                    if (err) {
+                        return callback(err);
+                    }
+
+                    console.log(results[0]);
+                    reservation.singer_name = results[0].name;
+                    reservation.singer_photoURL = results[0].photoURL;
+                    return callback(null, reservation);
+                });
+            }
+        });
+    });
+}
+
+
 module.exports.registerReservation = registerReservation;
-module.exports.findReservationByUser = findReservationByUser;
+module.exports.findReservationListOfUser = findReservationListOfUser;
+module.exports.findReservationById = findReservationById;

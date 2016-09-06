@@ -113,21 +113,20 @@ router.delete('/me', isSecure, isAuthenticated, function(req, res, next) {
 // HTTPS GET /users/me : 마이페이지 조회 첫번째 화면
 // --------------------------------------------------
 router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
+  console.log('users/me 수행');
   var user = {};
-  var userId = req.user.id;
+  user.id = req.user.id;
+  user.name = req.user.name;
+  user.email = req.user.email;
+  user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(req.user.photoURL);
+  user.type = req.user.type;
 
-  User.findUserById(userId, function(err, result) {
+  User.findUserById(user, function(err, result) {
     if (err) {
       return next(err);
     }
-
-    user.name = result.name;
-    user.email = result.email;
-    user.point = result.point;
-    user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(result.photoURL);
-    if (!path.basename(result.photoURL)) {
-      user.photoURL = '';
-    }
+    console.log(result);
+    user.point = result;
     // user.photoURL = 'http://localhost:' + process.env.HTTP_PORT + '/images/'  + path.basename(result.photoURL);
 
     res.send({

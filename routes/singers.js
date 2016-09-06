@@ -102,6 +102,9 @@ router.get('/:sid', function(req, res, next) {
             singer.name = result.name;
             singer.comment = result.comment;
             singer.photoURL = result.photoURL;
+            singer.songs = result.songs;
+            singer.standard_price = result.standard_price;
+            singer.special_price = result.special_price;
         }
 
         res.send({

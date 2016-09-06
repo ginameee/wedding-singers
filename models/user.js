@@ -33,30 +33,42 @@ function findUser(id, callback) {
 }
 
 
-function findUserById(id, callback) {
-    var sql_select_user_id = 'SELECT * FROM user WHERE id = ?';
+function findUserById(user, callback) {
+    console.log('findUserById 수행');
 
+    var sql_select_singer = 'SELECT * FROM singer WHERE user_id = ?';
+    var sql_select_customer = 'SELECT * FROM customer WHERE user_id = ?';
+    
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
+        if(user.type == 1) {
+            dbConn.query(sql_select_singer, [user.id], function(err, results) {
+                dbConn.release();
+                if (err) {
+                    return callback(err);
+                }
 
-        dbConn.query(sql_select_user_id, [id], function(err, results) {
-            dbConn.release();
-
-            if (err) {
-                return callback(err);
-            }
-
-            if (results.length === 0) {
-                return callback(null, null);
-            }
-            console.log({
-                result: results[0]
+                if (results.length === 0) {
+                    return callback(null, null);
+                }
+                callback(null, results[0].penalty)
             });
-            callback(null, results[0]);
-        });
-    })
+        } else {
+            dbConn.query(sql_select_customer, [user.id], function(err, results) {
+                dbConn.release();
+                if (err) {
+                    return callback(err);
+                }
+
+                if (results.length === 0) {
+                    return callback(null, null);
+                }
+                callback(null, results[0].point);
+            });
+        }
+    });
 }
 
 
@@ -142,9 +154,8 @@ function findOrCreate(profile, callback) {
                     dbConn.query(sql_insert_user, [user.facebookId], function(err, result) {
                         dbConn.release();
                         if (err) {
-                            return dbConn.rollback(function () {
-                                dbConn.release();
-                                return callback(err);
+                            return dbConn.rollback(function() {
+                                callback(err);
                             });
                         }
                         dbConn.commit(function() {
