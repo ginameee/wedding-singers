@@ -34,14 +34,25 @@ router.post('/', isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
-// HTTP PUT /reservations : 예약 상태 수정하기
+// HTTP PUT /reservations/:rid : 예약 상태 수정하기
 // --------------------------------------------------
-router.put('/', isAuthenticated, function(req, res, next) {
+router.put('/:rid', isAuthenticated, function(req, res, next) {
 
-  res.send({
-    message: '예약 상태 수정이 정상적으로 처리되었습니다.'
+  var param = {};
+  param.rid = req.params.rid;
+  param.type = req.body.type;
+
+  console.log(param.type);
+
+  Reservation.updateReservation(param, function(err) {
+    if (err) {
+      return next(err);
+    }
+    res.send({
+      code: 1,
+      result: '성공'
+    });
   });
-
 });
 
 
@@ -58,6 +69,8 @@ router.get('/me', isAuthenticated, function(req, res, next) {
 
   var user = req.user;
   user.tab = parseInt(req.query.tab || 1);
+  user.year = req.query.year || 0;
+  user.month = req.query.month || 0;
 
   Reservation.findReservationListOfUser(user, function(err, results) {
     if (err) {

@@ -15,7 +15,7 @@ router.get('/', isAuthenticated, function(req, res, next){
 
   var select = {};
   select.sid = req.query.sid;
-  select.simple = parseInt(req.query.simple || 0);
+  select.simple = parseInt(req.query.rating || 0);
 
   Review.selectReviewBySinger(select, function(err, results) {
     if (err) {

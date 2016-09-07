@@ -30,6 +30,8 @@ function findReservationListOfUser(user, callback) {
     var sql_select_all_reservation = 'SELECT * FROM reservation WHERE customer_user_id = ? or singer_user_id = ?';
     var sql_select_completed_reservation = 'SELECT * FROM reservation WHERE (customer_user_id = ? or singer_user_id = ?) AND status = 30';
     var sql_user_info = 'SELECT name, photoURL FROM user WHERE id = ?';
+    var sql_select_reservation_date = 'SELECT * FROM reservation WHERE (customer_user_id = ? OR singer_user_id = ?) AND (year(reservation_dtime) = ? AND month(reservation_dtime) = ?) AND status = 30';
+    // var sql_select_reservation_date = 'SELECT date_format(reservation_dtime, \'%Y-%m-%d\') reservations FROM reservation WHERE singer_user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -37,28 +39,34 @@ function findReservationListOfUser(user, callback) {
         }
 
         var sql_select_reservation;
-        if (user.tab === 1) sql_select_reservation = sql_select_all_reservation;
-        else sql_select_reservation = sql_select_completed_reservation;
-        console.log(sql_select_reservation);
+        if (user.tab === 1) {
+            sql_select_reservation = sql_select_all_reservation;
+        } else {
+            sql_select_reservation = sql_select_completed_reservation;
+        }
 
+        if (user.month) {
+            sql_select_reservation = sql_select_reservation_date;
+        }
 
-        dbConn.query(sql_select_reservation, [user.id, user.id], function(err, results) {
-            console.log('예약 select 쿼리문 수행');
-            if (err) {
-                dbConn.release();
-                return callback(err);
-            }
-
-            console.log('map 수행 바로 직전');
-            async.map(results, addUserInfo, function(err, results) {
-                console.log('map 수행완료');
-                dbConn.release();
+            dbConn.query(sql_select_reservation, [user.id, user.id, user.year, user.month], function(err, results) {
+                console.log('예약 select 쿼리문 수행');
                 if (err) {
+                    dbConn.release();
                     return callback(err);
                 }
-                callback(null, results);
+
+                console.log('map 수행 바로 직전');
+                async.map(results, addUserInfo, function(err, results) {
+                    console.log('map 수행완료');
+                    dbConn.release();
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(null, results);
+                });
             });
-        });
+
 
         function addUserInfo(item, cb) {
             console.log('map 수행 중');
@@ -154,6 +162,26 @@ function findReservationById(user, callback) {
 }
 
 
+function updateReservation(param, callback) {
+    var sql_update_resevation = 'UPDATE reservation ' +
+                                 'SET status = ? ' +
+                                 'WHERE id = ?';
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err)
+        }
+
+        dbConn.query(sql_update_resevation, [param.type, param.rid], function(err) {
+            dbConn.release();
+            if (err) {
+                return callback(err);
+            }
+            callback(null);
+        });
+    });
+}
 module.exports.registerReservation = registerReservation;
 module.exports.findReservationListOfUser = findReservationListOfUser;
 module.exports.findReservationById = findReservationById;
+module.exports.updateReservation = updateReservation;

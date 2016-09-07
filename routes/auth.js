@@ -74,9 +74,10 @@ router.post('/local/login', isSecure, passport.authenticate('local'), function(r
     }
 
     var user = {};
-    user.email = req.user.id;
+    user.id = req.user.id;
     user.email = req.user.email;
     user.name = req.user.name;
+    user.type = req.user.type;
 
     res.send({
         code: 1,
@@ -95,7 +96,9 @@ router.post('/facebook/token', isSecure, passport.authenticate('facebook-token')
     else {
         var user = {};
         user.id = req.user.id;
+        user.type = req.user.type || '최초 로그인(회원가입) 입니다';
         user.email = req.user.email || '최초 로그인(회원가입) 입니다';
+        user.name = req.user.name || '최초 로그인(회원가입) 입니다';
 
         if (!req.user.email) {
             user.flag = 0;

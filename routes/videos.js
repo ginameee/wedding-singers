@@ -33,53 +33,42 @@ router.get('/', function(req, res, next) {
     // var rowCnt = req.query.rowCnt || 0;
     // var pageNo = req.query.pageNo || 1;
 
-    var search = {};
-        search.theme =  req.query.theme;
-        search.location = req.query.location;
-        search.start_date= req.query.start_date;
-        search.end_date = req.query.end_date;
-        search.price = req.query.price;
-        search.composition = req.query.composition;
-        search.hash = req.query.hash;
+    var search = [];
+    search.push({ 'theme': req.query.theme || 0 });
+    search.push({ 'location': req.query.location || 0 });
+    search.push({ 'composition': req.query.composition || 0});
+    search.push({ 'vh.tag': req.query.keyword || 0 });
+    search.price = req.query.price || 0;
+
+    console.log(search);
 
     // 필터 적용해서 검색 가능하게 수정
     // 사용자가 입력한 조건들을 모아놓은 객체를 이용해서 조건검색을 실시할 것임.
-    Video.findVideoByFilter(search);
-    
-
-    res.send({
-        code:1,
-        // rowCnt: rowCnt,
-        // pageNo: pageNo,
-        search: search,
-        result: [
-            {
-                singer_name: '김동률',
-                title: '감사',
-                hit: 353,
-                favorite: 20
-            },
-            {
-                singer_name: '홍길동',
-                title: '다행이다',
-                hit: 352,
-                favorite: 20
-            }
-        ]
+    Video.findVideoByFilter(search, function(err, results) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            code:1,
+            // rowCnt: rowCnt,
+            // pageNo: pageNo,
+            result: results
+        });
     });
 });
 
 
 // --------------------------------------------------
-// HTTP GET /videos/main?type=2&pageNo=3&rowCnt=2 : 메인페이지 동영상 목록
+// HTTP GET /videos/main?type=2: 메인페이지 동영상 목록
 // --------------------------------------------------
 router.get('/main', function(req, res, next) {
     // 동영상을 검색할 때,
+    // 1 - 인기싱어영상,  2 - 신규싱어영상
     var type = parseInt(req.query.type) || 1;
     // var rowCnt = parseInt(req.query.rowCnt) || 1;
     // var pageNo = parseInt(req.query.pageNo) || 1;
 
-    Video.listVideo(function(err, videos) {
+    Video.listVideo(type ,function(err, videos) {
         if (err) {
             return next(err);
         }

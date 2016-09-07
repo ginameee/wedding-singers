@@ -114,8 +114,8 @@ function findSingerById(id, callback) {
                 console.log(id);
                 console.log(results[0]);
 
-                singer.user_id = results[0].user_id;
-                singer.email = results[0].email || '';
+                // singer.user_id = results[0].user_id;
+                // singer.email = results[0].email || '';
                 singer.name = results[0].name;
                 singer.comment = results[0].comment || '';
                 singer.description = results[0].description || '';
@@ -123,7 +123,7 @@ function findSingerById(id, callback) {
                 singer.special_price = parseInt(results[0].special_price || 0);
                 singer.composition = parseInt(results[0].theme || 0);
                 singer.penalty = parseInt(results[0].penalty);
-                singer.photoURL = 'http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(results[0].photoURL);
+                // singer.photoURL = 'http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(results[0].photoURL);
 
                 cb(null);
             });

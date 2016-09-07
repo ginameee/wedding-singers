@@ -3,6 +3,7 @@ var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var Singer = require('../models/singer');
+var path = require('path');
 
 // --------------------------------------------------
 // HTTPS PUT /singers/me : Singer 프로필 수정
@@ -125,6 +126,37 @@ router.get('/:sid', function(req, res, next) {
 
 
 // --------------------------------------------------
+// HTTPS GET /singers/me : Singer가 자신의 마이페이지 조회
+// --------------------------------------------------
+router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
+    var singer = {};
+    console.log('유저객체보기');
+    console.log(req.user);
+    singer.user_id = req.user.id;
+    singer.email = req.user.email;
+    singer.name = req.user.name;
+    singer.photoURL = 'http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(req.user.photoURL);
+    singer.simple = parseInt(req.query.simple || 0);
+
+    Singer.findSingerById(singer.user_id, function(err, result) {
+        if (err) return next(err);
+
+        if (!singer.simple) {
+            singer = result
+        } else {
+            singer.name = result.name;
+            singer.comment = result.comment;
+            singer.photoURL = result.photoURL;
+        }
+
+        res.send({
+            code: 1,
+            result: singer
+        });
+    });
+});
+
+// --------------------------------------------------
 // HTTP GET /singers/me/penalties?rowCnt=?&pageNo=3 : Singer 패널티포인트 조회
 // --------------------------------------------------
 // router.get('/me/penalties', isSecure, function(req, res, next) {
@@ -152,32 +184,6 @@ router.get('/:sid', function(req, res, next) {
 //                 write_date: '2016-05-17'
 //             }
 //         ]
-//     });
-// });
-
-// --------------------------------------------------
-// HTTPS GET /singers/me : Singer가 자신의 마이페이지 조회
-// --------------------------------------------------
-// router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
-//     var singer = {};
-//     singer.user_id = req.user.id;
-//     singer.simple = parseInt(req.query.simple || 0);
-//
-//     Singer.findSingerById(singer.user_id, function(err, result) {
-//         if (err) return next(err);
-//
-//         if (!singer.simple) {
-//             singer = result
-//         } else {
-//             singer.name = result.name;
-//             singer.comment = result.comment;
-//             singer.photoURL = result.photoURL;
-//         }
-//
-//         res.send({
-//             code: 1,
-//             result: singer
-//         });
 //     });
 // });
 

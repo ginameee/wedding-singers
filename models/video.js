@@ -80,7 +80,54 @@ function findVideoById(id, callback) {
 
 
 function findVideoByFilter(search, callback) {
-    callback(null, true);
+    var sql = [];
+    sql.push('SELECT * ' +
+             'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
+                           'RIGHT JOIN video_hash vh ON (v.id = vh.video_id) '+
+             'WHERE standard_price > ? AND ? ');
+    sql.push('SELECT * ' +
+             'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
+                          'RIGHT JOIN video_hash vh ON (v.id = vh.video_id) '+
+             'WHERE standard_price > ? AND ? AND ? ');
+    sql.push('SELECT * ' +
+             'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
+                          'RIGHT JOIN video_hash vh ON (v.id = vh.video_id) '+
+             'WHERE standard_price > ? AND ? AND ? AND ?');
+    sql.push('SELECT * ' +
+             'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
+                          'RIGHT JOIN video_hash vh ON (v.id = vh.video_id) '+
+             'WHERE standard_price > ? AND ? AND ? AND ? AND ?');
+
+    var filter = [];
+    filter.push(search.price);
+
+    async.each(search, function(item, done) {
+        if (item[Object.keys(item).toString()] !== 0) {
+            filter.push(item);
+            done(null);
+        } else {
+            done(null);
+        }
+    }, function(err) {
+        if (err) {
+            return callback(err);
+        }
+        console.log(filter);
+        console.log(filter.length);
+        console.log(sql[(filter.length)-3]);
+        dbPool.getConnection(function(err, dbConn) {
+            if (err) {
+                return callback(err);
+            }
+            dbConn.query(sql[(filter.length)-2], filter, function(err, results) {
+                dbConn.release();
+                if (err) {
+                    return callback(err);
+                }
+                callback(null, results);
+            });
+        });
+    });
 }
 
 
@@ -214,8 +261,33 @@ function insertVideo(video, callback) {
 }
 
 
-function listVideo(callback) {
-    callback(null, true);
+function listVideo(type, callback) {
+    var sql_select_new_videos = 'SELECT v.id id, u.name singer_name, title, hit, favorite_cnt, url, write_dtime ' +
+                                'FROM video v JOIN user u ON (v.singer_user_id = u.id) ' +
+                                'ORDER BY write_dtime DESC';
+    var sql_select_popular_videos = 'SELECT v.id id, u.name singer_name, title, hit, favorite_cnt, url, write_dtime ' +
+                                     'FROM video v JOIN user u ON (v.singer_user_id = u.id) ' +
+                                     'ORDER BY favorite_cnt DESC';
+    var sql_select_videos;
+    if (type === 1) {
+        sql_select_videos = sql_select_popular_videos;
+    } else {
+        sql_select_videos = sql_select_new_videos;
+    }
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            callback(err);
+        }
+
+        dbConn.query(sql_select_videos, [], function(err, results) {
+            dbConn.release();
+            if (err) {
+                return callback(err);
+            }
+            callback(null, results);
+        });
+    });
 }
 
 // HTTP DELETE /videos/:vid 에서 호출할 동영상을 지우는 함수

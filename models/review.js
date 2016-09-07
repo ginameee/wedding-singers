@@ -81,7 +81,7 @@ function selectReviewBySinger(select, callback) {
         }
 
         var sql_select_review = sql_select_review_all;
-        if (select.simple) sql_select_review = sql_select_review_sum;
+        if (select.rating) sql_select_review = sql_select_review_sum;
 
         dbConn.query(sql_select_review, [select.sid], function(err, results) {
             dbConn.release();

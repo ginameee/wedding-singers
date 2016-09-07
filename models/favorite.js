@@ -80,9 +80,10 @@ function deleteFavorite(info, callback) {
 
 //GET /favorites에서 호출할 찜 조회 함수
 function findFavoriteByUser(info, callback) {
-    var sql_select_favorite = 'SELECT v.title title, v.write_dtime write_dtime, v.id video_id, v.favorite_cnt favorite_cnt, v.hit hit ' +
+    var sql_select_favorite = 'SELECT v.id id, u.name singer_name, u.id singer_id, title, hit, favorite_cnt, url, v.write_dtime write_dtime ' +
                               'FROM favorite f JOIN video v ON (f.video_id = v.id) ' +
-                              'WHERE customer_user_id = ?';
+                                              'JOIN user u ON (v.singer_user_id = u.id) ' +
+                              'WHERE f.customer_user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         dbConn.release();
