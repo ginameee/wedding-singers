@@ -4,10 +4,14 @@ var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var Reservation = require('../models/reservation');
 
+// 로깅용 모듈
+var logger = require('../common/logger');
+
 // --------------------------------------------------
 // HTTP POST /reservations : 예약 신청하기
 // --------------------------------------------------
 router.post('/', isAuthenticated, function(req, res, next) {
+
   var reservation = {};
   reservation.cid = req.user.id;
   reservation.place = req.body.place;
@@ -17,8 +21,10 @@ router.post('/', isAuthenticated, function(req, res, next) {
   reservation.sid = req.body.singer_id;
   reservation.type = req.body.type;
   reservation.song = req.body.song;
-  console.log(reservation.cid);
-  console.log('registerReservation 호출 바로 직전');
+
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+  logger.log('debug', 'input: %j', reservation, {});
 
   Reservation.registerReservation(reservation, function(err) {
     if (err) {
@@ -37,6 +43,11 @@ router.post('/', isAuthenticated, function(req, res, next) {
 // HTTP PUT /reservations/:rid : 예약 상태 수정하기
 // --------------------------------------------------
 router.put('/:rid', isAuthenticated, function(req, res, next) {
+
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+  logger.log('debug', 'rid: %d', req.params.rid);
+  logger.log('debug', 'type: %d', req.body.type);
 
   var param = {};
   param.rid = req.params.rid;
@@ -60,6 +71,12 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
 // HTTP GET /reservations/me : 예약 목록 조회
 // --------------------------------------------------
 router.get('/me', isAuthenticated, function(req, res, next) {
+
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+  logger.log('debug', 'tab: %d', req.query.tab);
+  logger.log('debug', 'year: %d', req.query.year);
+  logger.log('debug', 'month: %d', req.query.month);
 
   // if (req.url.match(/\?pageNo=\d+&rowCnt=\d+/i)) { // 주문 목록 조회 req.url: /?pageNo=1&rowCount=10
   // if (req.query.pageNo || req.query.rowCnt ) {
@@ -85,10 +102,15 @@ router.get('/me', isAuthenticated, function(req, res, next) {
   });
 });
 
+
 // --------------------------------------------------
 // HTTP GET /reservations?sid=1 : 싱어들의 예약 일 조회
 // --------------------------------------------------
 router.get('/', isAuthenticated, function(req, res, next) {
+
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+  logger.log('debug', 'sid: %d', req.query.sid);
 
   var user = {};
   user.date = 1;
@@ -106,10 +128,15 @@ router.get('/', isAuthenticated, function(req, res, next) {
   })
 });
 
+
 // --------------------------------------------------
 // HTTP GET /reservations/:id : 예약 상세 보기
 // --------------------------------------------------
 router.get('/:rid', isAuthenticated, function(req, res, next) {
+
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+  logger.log('debug', 'rid: %d', req.params.rid);
 
   var user = req.user;
   user.reservation_id = req.params.rid;

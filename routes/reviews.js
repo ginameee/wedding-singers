@@ -4,10 +4,18 @@ var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var Review = require('../models/review');
 
+// 로깅용 모듈
+var logger = require('../common/logger');
+
 // --------------------------------------------------
 // HTTP GET /reviews?sid : 리뷰 목록 조회
 // --------------------------------------------------
 router.get('/', isAuthenticated, function(req, res, next){
+
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+
+
   // if ( req.query.pageNo || req.query.rowCnt ) {
   //   var pageNo = parseInt(req.query.pageNo, 10);
   //   var rowCnt = parseInt(req.query.rowCnt, 10);
@@ -16,6 +24,9 @@ router.get('/', isAuthenticated, function(req, res, next){
   var select = {};
   select.sid = req.query.sid;
   select.rating = parseInt(req.query.rating || 0);
+
+  logger.log('debug', 'sid: %d', select.sid);
+  logger.log('debug', 'rating: %d', select.rating);
 
   Review.selectReviewBySinger(select, function(err, results) {
     if (err) {
@@ -43,6 +54,10 @@ router.post('/', isAuthenticated, function(req, res, next) {
   review.content = req.body.content;
   review.write_dtime = req.body.write_dtime;
 
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+  logger.log('debug', 'input: %j', review, {});
+
   Review.registerReview(review, function(err, result) {
     if (err) {
       return next(err);
@@ -66,9 +81,9 @@ router.post('/', isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 // HTTP POST /reviews/me 자신이 쓴 리뷰 조회
 // --------------------------------------------------
-router.get('/me', isAuthenticated, function(req, res, next) {
-
-});
+// router.get('/me', isAuthenticated, function(req, res, next) {
+//
+// });
 
 // // --------------------------------------------------
 // // HTTP PUT /reviews/:rid : 리뷰 수정

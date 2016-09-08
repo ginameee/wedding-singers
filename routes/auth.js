@@ -72,6 +72,12 @@ passport.deserializeUser(function(id, done) {
 // HTTPS POST /auth/local/login : 로그인(로컬)
 // --------------------------------------------------
 router.post('/local/login', isSecure, passport.authenticate('local'), function(req, res, next) {
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'email: %s', req.body.email);
+    logger.log('debug', 'password: %s', req.body.password);
+
+
     if (!req.user) {
         console.log('login failed');
     }
@@ -93,6 +99,11 @@ router.post('/local/login', isSecure, passport.authenticate('local'), function(r
 // HTTPS post /auth/facebook/token : 로그인(연동)
 // --------------------------------------------------
 router.post('/facebook/token', isSecure, passport.authenticate('facebook-token'), function(req, res, next) {
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'access_token: %s', req.body.access_token);
+
+
     if (!req.user) {
         res.send('로그인실패!');
     }
@@ -124,6 +135,10 @@ router.post('/facebook/token', isSecure, passport.authenticate('facebook-token')
 // HTTPS GET /auth/logout : 로그아웃(연동)
 // --------------------------------------------------
 router.get('/logout', isSecure, isAuthenticated, function(req, res, next) {
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+
+
     req.logout();
     res.send({
         code: 1,

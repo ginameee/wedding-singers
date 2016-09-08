@@ -5,6 +5,9 @@ var isSecure = require('./common').isSecure;
 var Singer = require('../models/singer');
 var path = require('path');
 
+// 로깅용 모듈
+var logger = require('../common/logger');
+
 // --------------------------------------------------
 // HTTPS PUT /singers/me : Singer 프로필 수정
 // --------------------------------------------------
@@ -65,6 +68,11 @@ router.get('/:sid/holidaies', isAuthenticated, function(req, res, next) {
 // HTTP PUT /singers/me/holidaies : Singer 휴일 변경
 // --------------------------------------------------
 router.put('/me/holidaies', isAuthenticated, function(req, res, next) {
+
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'update_dates: %s', req.body.update_dates);
+
     var singer = {};
     singer.user_id = req.user.id;
     singer.update_dates = req.body.update_dates;
@@ -89,10 +97,17 @@ router.get('/:sid', function(req, res, next) {
     if (req.params.sid == 'me') {
         singer.user_id = req.user.id
     } else {
-        singer.user_id = req.params.sid;
+        singer.user_id = parseInt(req.params.sid);
     }
 
     singer.simple = parseInt(req.query.simple || 0);
+
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'singer.user_id: %d ', singer.user_id);
+    logger.log('debug', 'simple: %d', singer.simple);
+
+
 
     Singer.findSingerById(singer.user_id, function(err, result) {
         if (err) return next(err);
@@ -129,6 +144,10 @@ router.get('/:sid', function(req, res, next) {
 // HTTPS GET /singers/me : Singer가 자신의 마이페이지 조회
 // --------------------------------------------------
 router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
+
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+
     var singer = {};
     console.log('유저객체보기');
     console.log(req.user);

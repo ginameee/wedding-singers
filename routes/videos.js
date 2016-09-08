@@ -2,14 +2,19 @@ var express = require('express');
 var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
-
 var Video = require('../models/video.js');
+
+// 로깅용 모듈
+var logger = require('../common/logger');
 
 
 // --------------------------------------------------
 // HTTP GET /videos/me : 내 동영상 보기
 // --------------------------------------------------
 router.get('/me', isAuthenticated, function(req, res, next) {
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+
     console.log('내 동영상 보기');
     var uid = req.user.id;
     console.log(uid);
@@ -30,6 +35,14 @@ router.get('/me', isAuthenticated, function(req, res, next) {
 // HTTP GET /videos?theme=3&location=2&start_date='2016-05-32'&end_date='2016-05-32'&price=””&composition=””&hash=””&pageNo=””&rowCnt=”” : 동영상 검색
 // --------------------------------------------------
 router.get('/', function(req, res, next) {
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'theme: %d', req.query.theme);
+    logger.log('debug', 'location: %d', req.query.location);
+    logger.log('debug', 'composition: %d', req.query.composition);
+    logger.log('debug', 'vh.tag: %s', req.query.theme);
+
+
     // var rowCnt = req.query.rowCnt || 0;
     // var pageNo = req.query.pageNo || 1;
 
@@ -40,7 +53,7 @@ router.get('/', function(req, res, next) {
     search.push({ 'vh.tag': req.query.keyword || 0 });
     search.price = req.query.price || 0;
 
-    console.log(search);
+
 
     // 필터 적용해서 검색 가능하게 수정
     // 사용자가 입력한 조건들을 모아놓은 객체를 이용해서 조건검색을 실시할 것임.
@@ -62,6 +75,10 @@ router.get('/', function(req, res, next) {
 // HTTP GET /videos/main?type=2: 메인페이지 동영상 목록
 // --------------------------------------------------
 router.get('/main', function(req, res, next) {
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'type: %d', req.query.type);
+
     // 동영상을 검색할 때,
     // 1 - 인기싱어영상,  2 - 신규싱어영상
     var type = parseInt(req.query.type) || 1;
@@ -95,6 +112,10 @@ router.post('/', isAuthenticated, function(req, res, next) {
     video.write_dtime = req.body.write_dtime;
     video.hash = req.body.hash || [ '' ];
 
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'input: %j', video, {});
+
     // InsertVideo 정의
     Video.insertVideo(video, function(err, result) {
         if (err) {
@@ -120,6 +141,11 @@ router.put('/:vid', isAuthenticated, function(req, res, next) {
     video.url = req.body.url;
     video.hash = req.body.hash || [''];
 
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'input: %j', video, {});
+
+
     Video.updateVideo(video, function(err, result) {
         if (err) {
             return next(err);
@@ -137,6 +163,10 @@ router.put('/:vid', isAuthenticated, function(req, res, next) {
 // HTTP GET /videos/:vid : customer가 동영상 보기
 // --------------------------------------------------
 router.get('/:vid', function(req, res, next) {
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'vid: %d', req.params.vid);
+
     console.log(req.params.vid);
     Video.findVideoById(req.params.vid, function(err, result) {
         res.send({
@@ -153,6 +183,10 @@ module.exports = router;
 // HTTP DELETE /videos/:vid : 동영상 삭제
 // --------------------------------------------------
 router.delete('/:vid', isAuthenticated, function(req, res, next) {
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'vid: %d', req.params.vid);
+
     var vid = req.params.vid;
 
     Video.deleteVideo(vid, function(err, result) {

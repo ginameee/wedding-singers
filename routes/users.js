@@ -9,6 +9,9 @@ var async = require('async');
 var formidable = require('formidable');
 var path = require('path');
 
+// 로깅용 모듈
+var logger = require('../common/logger');
+
 // --------------------------------------------------
 // HTTPS POST /users/local : 회원가입(로컬)
 // --------------------------------------------------
@@ -21,6 +24,10 @@ router.post('/local', isSecure, function(req, res, next) {
   user.phone = req.body.phone;
   user.type = parseInt(req.body.type);
   user.registration_token = req.body.registration_token;
+
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+  logger.log('debug', 'input: %j', user, {});
 
   console.log(user);
 
@@ -64,6 +71,10 @@ router.post('/facebook/token', isSecure, isAuthenticated, function(req, res, nex
   user.name = req.body.name;
   user.type = parseInt(req.body.type);
   user.registration_token = req.body.registration_token;
+
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+  logger.log('debug', 'input: %j', user, {});
 
   User.findUserByEmail(user.email, function(err, result) {
     if (err) {
@@ -121,6 +132,10 @@ router.delete('/me', isSecure, isAuthenticated, function(req, res, next) {
 // HTTPS GET /users/me : 마이페이지 조회 첫번째 화면
 // --------------------------------------------------
 router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
+
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+
   console.log('users/me 수행');
   var user = {};
   user.id = req.user.id;
@@ -159,9 +174,13 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
 
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+  logger.log('debug', 'password: %s', req.body.password);
+
   var user = {};
   user.id = req.user.id;
-  // user.password = req.body.password;
+  user.password = req.body.password;
   // user.name = req.body.name;
   // user.phone = req.body.phone;
   // user.photoURL = req.body.url;
