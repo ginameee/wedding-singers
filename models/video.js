@@ -8,7 +8,6 @@ var async = require('async');
 function findVideoByUserId(uid, callback) {
     var sql_select_video = 'SELECT * FROM video WHERE singer_user_id = ?';
     var sql_select_video_hash = 'SELECT tag FROM video_hash WHERE video_id = ?';
-    console.log('findVideoByUserId 호출');
 
     var videos = [];
 
@@ -18,7 +17,6 @@ function findVideoByUserId(uid, callback) {
         }
 
         dbConn.query(sql_select_video, [uid], function(err, results) {
-            console.log('쿼리문 수행');
             if (err) {
                 dbConn.release();
                 return callback(err);
@@ -26,7 +24,6 @@ function findVideoByUserId(uid, callback) {
 
 
             async.each(results, function(item_video, done) {
-                console.log('이치쿼리문수행');
                 dbConn.query(sql_select_video_hash, [item_video.id],function(err, results_hashes) {
                     if (err) {
                         dbConn.release();
@@ -46,7 +43,6 @@ function findVideoByUserId(uid, callback) {
                     done(null);
                 });
             }, function(err) {
-                console.log('done 콜백 수행');
                 if (err) {
                     dbConn.release();
                     return callback(err);
@@ -60,38 +56,60 @@ function findVideoByUserId(uid, callback) {
 }
 
 
-function findVideoById(id, callback) {
-    // var sql_select_video = 'SELECT * FROM video v JOIN user u ON (v.singer_user_id = u.id) ' +
-    //                                               'JOIN singer s ON (u.id = s.user_id) ' +
-    //                                                'WHERE v.id = ?';
-    var sql_select_video = 'SELECT * FROM video v WHERE v.id = ?';
+function findVideoById(input, callback) {
+    var sql_select_video = 'SELECT id, singer_user_id, title, url, hit, favorite_cnt, date_format(write_dtime,\'%Y-%m-%d\') write_dtime ' +
+                            'FROM video WHERE id = ?';
+    var sql_check_favorite = 'SELECT * FROM favorite ' +
+                             'WHERE customer_user_id = ? AND video_id = ?';
     var video = {};
+    video.favorite_check = 0;
 
-    dbPool.getConnection(function(err, dbConn) {
+
+    async.parallel([checkFavorite, selectVideo], function(err) {
         if (err) {
             return callback(err);
         }
+        callback(null, video);
+    });
 
-        dbConn.query(sql_select_video, [id], function(err, results) {
+    function checkFavorite(cb) {
+        dbPool.getConnection(function(err, dbConn) {
             if (err) {
-                dbConn.release();
-                return callback(err);
+                return cb(err);
             }
 
-            video.id = results[0].id;
-            video.title = results[0].title;
-            video.hit = results[0].hit;
-            video.favorite_cnt = results[0].favorite_cnt;
-            video.url = results[0].url;
-            video.write_dtime = results[0].write_dtime;
-            // video.singer_name = results[0].name;
-            // video.singer_id = results[0].singer_user_id;
-            // video.singer_comment = results[0].comment;
-
-
-            callback(null, video);
+            dbConn.query(sql_check_favorite, [input.uid, input.vid], function(err, results) {
+                dbConn.release();
+                if (err) {
+                    return cb(err);
+                }
+                if (results.length > 0) {
+                    video.favorite_check = 1;
+                }
+                cb(null);
+            });
         });
-    });
+    }
+    function selectVideo(cb) {
+        dbPool.getConnection(function(err, dbConn) {
+            if (err) {
+                return cb(err);
+            }
+            dbConn.query(sql_select_video, [input.vid], function(err, results) {
+                dbConn.release();
+                if (err) {
+                    return cb(err);
+                }
+                video.id = results[0].id;
+                video.url = results[0].url;
+                video.hit = results[0].hit;
+                video.write_dtime = results[0].write_dtime;
+                video.favorite_cnt = results[0].favorite_cnt;
+                video.title = results[0].title;
+                cb(null);
+            });
+        })
+    }
 }
 
 

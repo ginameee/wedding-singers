@@ -43,7 +43,13 @@ app.use(session({
     client: redisClient
   }),
   resave: true,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    path: '/',
+    httpOnly: true,
+    secure: false, // true면 http에선 쿠키를 보내지 않는다, 따라서 default값은 false다.
+    maxAge: 1000 * 60 * 60 * 24 * 30
+  }
 }));
 
 app.use(passport.initialize());

@@ -4,6 +4,8 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
 
+
+
 // 예약을 등록할 때 사용하는 함수
 function registerReservation(reservation, callback) {
     var sql_insert_reservation = 'INSERT INTO reservation(place, demand, reservation_dtime, write_dtime, singer_user_id, customer_user_id, type, song) ' +
@@ -28,7 +30,7 @@ function registerReservation(reservation, callback) {
 function findReservationListOfUser(user, callback) {
     var reservation = {};
     var sql_select_all_reservation = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song  ' +
-                                      'FROM reservation WHERE customer_user_id = ? or singer_user_id = ?';
+                                      'FROM reservation WHERE customer_user_id = ? or singer_user_id = ? AND status != 30';
     var sql_select_completed_reservation = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song FROM reservation WHERE (customer_user_id = ? or singer_user_id = ?) AND status = 30';
     var sql_user_info = 'SELECT name, photoURL FROM user WHERE id = ?';
     var sql_select_reservation_by_date = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song  FROM reservation WHERE (customer_user_id = ? OR singer_user_id = ?) AND (year(reservation_dtime) = ? AND month(reservation_dtime) = ?) AND status = 30';
@@ -189,6 +191,7 @@ function findReservationById(user, callback) {
 
 
 function updateReservation(param, callback) {
+
     var sql_update_resevation = 'UPDATE reservation ' +
                                  'SET status = ? ' +
                                  'WHERE id = ?';
@@ -203,11 +206,18 @@ function updateReservation(param, callback) {
             if (err) {
                 return callback(err);
             }
+
             callback(null);
         });
     });
+}
+
+function deleteAfterTime(param, callback) {
+    var sql_delete_reservation = 'DELETE FROM reservation WHERE id = ?';
+    callback(null, 'removed!!!');
 }
 module.exports.registerReservation = registerReservation;
 module.exports.findReservationListOfUser = findReservationListOfUser;
 module.exports.findReservationById = findReservationById;
 module.exports.updateReservation = updateReservation;
+module.exports.deleteAfterTime = deleteAfterTime;

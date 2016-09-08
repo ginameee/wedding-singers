@@ -21,14 +21,15 @@ router.get('/', isAuthenticated, function(req, res, next){
   //   var rowCnt = parseInt(req.query.rowCnt, 10);
   // }
 
-  var select = {};
-  select.sid = req.query.sid;
+  var select = [];
+  select.push({singer_user_id: parseInt(req.query.sid)});
   select.rating = parseInt(req.query.rating || 0);
+  select.type = 2;
 
   logger.log('debug', 'sid: %d', select.sid);
   logger.log('debug', 'rating: %d', select.rating);
 
-  Review.selectReviewBySinger(select, function(err, results) {
+  Review.selectReviewByUser(select, function(err, results) {
     if (err) {
       return next(err);
     }
@@ -38,6 +39,36 @@ router.get('/', isAuthenticated, function(req, res, next){
       // rowCnt: rowCnt,
       result: results
     });
+  });
+});
+
+
+// --------------------------------------------------
+// HTTP GET /reviews/me : 자신의 리뷰 목록 조회
+// --------------------------------------------------
+router.get('/me', function(req, res, next) {
+  logger.log('debug', 'content-type: %s', req.headers['content-type']);
+  logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+
+  var select = [];
+  console.log('현재 유저객체');
+  console.log(req.user);
+  select.type = req.user.type;
+
+  if (select.type == 1) {
+    select.push({singer_user_id: req.user.id});
+  } else {
+    select.push({customer_user_id: req.user.id});
+  }
+
+  Review.selectReviewByUser(select, function(err, results) {
+    if (err) {
+      return next(err);
+    }
+    res.send({
+      code: 1,
+      result: results
+    })
   });
 });
 

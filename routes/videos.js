@@ -32,6 +32,28 @@ router.get('/me', isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
+// HTTP GET /videos?sid : 싱어의 다른 동영상 보기
+// --------------------------------------------------
+router.get('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'singer_id: %d', req.query.sid);
+
+    var uid = req.query.sid;
+
+    Video.findVideoByUserId(uid, function(err, results) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            code: 1,
+            result: results
+        });
+    });
+});
+
+
+// --------------------------------------------------
 // HTTP GET /videos?theme=3&location=2&start_date='2016-05-32'&end_date='2016-05-32'&price=””&composition=””&hash=””&pageNo=””&rowCnt=”” : 동영상 검색
 // --------------------------------------------------
 router.get('/', function(req, res, next) {
@@ -167,14 +189,16 @@ router.get('/:vid', function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     logger.log('debug', 'vid: %d', req.params.vid);
 
-    console.log(req.params.vid);
-    Video.findVideoById(req.params.vid, function(err, result) {
+    var input = {};
+    input.vid = parseInt(req.params.vid);
+    input.uid = parseInt(req.user.id || 0);
+
+    Video.findVideoById(input, function(err, result) {
         res.send({
             code: 1,
             result: result
         });
     });
-
 });
 module.exports = router;
 

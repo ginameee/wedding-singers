@@ -124,7 +124,9 @@ function findSingerById(id, callback) {
                 singer.special_price = parseInt(results[0].special_price || 0);
                 singer.composition = parseInt(results[0].theme || 0);
                 singer.penalty = parseInt(results[0].penalty);
-                singer.photoURL = 'http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(results[0].photoURL);
+                singer.photoURL = path.join('http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:',process.env.HTTP_PORT,'/images/',path.basename(results[0].photoURL));
+                console.log(results[0].photoURL);
+                console.log(path.basename(results[0].photoURL));
 
                 cb(null);
             });
@@ -194,8 +196,8 @@ function registerSingerHolidays(singer, callback) {
                               'VALUES (str_to_date(?, \'%Y-%m-%d\'), ?)';
     var sql_select_holiday = 'SELECT * FROM singer_holiday ' +
                               'WHERE holiday = str_to_date(?, \'%Y-%m-%d\') AND singer_user_id = ?';
-    // var sql_delete_holiday = 'DELETE FROM singer_holiday ' +
-    //                           'WHERE holiday = str_to_date(?, \'%Y-%m-%d\') AND singer_user_id = ?';
+    var sql_delete_holiday = 'DELETE FROM singer_holiday ' +
+                              'WHERE holiday = str_to_date(?, \'%Y-%m-%d\') AND singer_user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -210,14 +212,13 @@ function registerSingerHolidays(singer, callback) {
                 }
 
                 if(results.length > 0) {
-                   //  dbConn.query(sql_delete_holiday,[item, singer.user_id], function(err, result) {
-                   //      if (err) {
-                   //          dbConn.release();
-                   //          return cb(err);
-                   //      }
-                   //      return cb(null, result);
-                   // });
-                    return cb(null);
+                    dbConn.query(sql_delete_holiday,[item, singer.user_id], function(err, result) {
+                        if (err) {
+                            dbConn.release();
+                            return cb(err);
+                        }
+                        return cb(null, result);
+                   });
                 } else {
                     dbConn.query(sql_insert_holiday,[item, singer.user_id], function(err, result) {
                         if (err) {

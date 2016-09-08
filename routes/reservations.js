@@ -3,6 +3,8 @@ var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var Reservation = require('../models/reservation');
+var CronJob = require('cron').CronJob;
+var moment = require('moment-timezone');
 
 // 로깅용 모듈
 var logger = require('../common/logger');
@@ -63,6 +65,28 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
       code: 1,
       result: '성공'
     });
+
+    var timeZone = "Asia/Seoul";
+    var day = 7;
+    if (param.type === 10) {
+      day = 1
+    }
+
+    var future = moment().tz(timeZone).add(1, 's');
+    var crontime = future.second() + " " +
+                   future.minute() + " " +
+                   future.hour() + " " +
+                   future.date() + " " +
+                   future.month() + " ";
+    crontime = '* * * * * *';
+    var job = new CronJob(crontime, function() {
+      Reservation.deleteAfterTime(param, function(err, result) {
+        console.log(result);
+      });
+      job.stop();
+    }, function() {
+      
+    }, true, timeZone);
   });
 });
 

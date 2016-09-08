@@ -406,8 +406,7 @@ function updateUser(user, callback) {
         }
 
         function deleteFile(cb) {
-            console.log('deleteFIle 수행');
-            if(!user.file) return cb(null, true);
+            if(!user.file) return cb(null);
 
             dbConn.query(sql_select_filepath, [user.id], function(err, results) {
                 if (err) {
@@ -420,7 +419,7 @@ function updateUser(user, callback) {
                     if (err) {
                         return cb(null);
                     }
-                    cb(null, true);
+                    cb(null);
                 });
             });
         }

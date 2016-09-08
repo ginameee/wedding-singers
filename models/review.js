@@ -73,33 +73,63 @@ function registerReview(review, callback) {
     });
 }
 
-function selectReviewBySinger(select, callback) {
+function selectReviewByUser(select, callback) {
 
     var sql_select_review_all = 'SELECT id, customer_user_id, singer_user_id, point, content, write_dtime ' +
-                                'FROM review WHERE singer_user_id = ?';
+                                 'FROM review WHERE ?';
+    var sql_select_review_sum = 'SELECT COUNT(*) review_cnt, AVG(point) review_point FROM review WHERE ?';
+    var sql_select_user_info = 'SELECT * FROM user WHERE id = ?';
 
-    var sql_select_review_sum = 'SELECT COUNT(*) review_cnt, AVG(point) review_point FROM review WHERE singer_user_id = ?'
 
-    dbPool.getConnection(function(err, dbConn) {
+    dbPool.getConnection(function (err, dbConn) {
         if (err) {
             return callback(err);
         }
 
         var sql_select_review = sql_select_review_all;
         if (select.rating) sql_select_review = sql_select_review_sum;
-
-        dbConn.query(sql_select_review, [select.sid], function(err, results) {
-            dbConn.release();
+        dbConn.query(sql_select_review, [select[0]], function (err, results_review) {
 
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
 
-            callback(null, results);
+            if (select.rating) {
+                dbConn.release();
+                return callback(null, results_review);
+            }
+
+            async.map(results_review, function (item, done) {
+                var user_info = {};
+
+                if (select.type == 1) {
+                    user_info.id = item.customer_user_id;
+                    user_info.param = 'customer_';
+                } else {
+                    user_info.id = item.singer_user_id;
+                    user_info.param = 'singer_';
+                }
+
+                dbConn.query(sql_select_user_info, [user_info.id], function (err, results_user) {
+                    if (err) {
+                        return done(err);
+                    }
+
+                    item[user_info.param + 'name'] = results_user[0].name;
+                    done(null, item);
+                });
+            }, function(err, results) {
+                console.log(results);
+                dbConn.release();
+                if (err) {
+                    return callback(err);
+                }
+                callback(null, results);
+            });
         });
     });
-
 }
 
 module.exports.registerReview = registerReview;
-module.exports.selectReviewBySinger = selectReviewBySinger
+module.exports.selectReviewByUser = selectReviewByUser;
