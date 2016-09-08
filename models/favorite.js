@@ -36,21 +36,21 @@ function insertFavorite(favorite, callback) {
 
         function insertFavoriteInfo(cb) {
             var sql_insert_favorite = 'INSERT INTO favorite(video_id, customer_user_id) VALUES(?, ?)';
-            dbConn.query(sql_insert_favorite, [favorite.vid, favorite.uid], function(err, result) {
+            dbConn.query(sql_insert_favorite, [favorite.vid, favorite.uid], function(err) {
                 if (err) {
                     return cb(err);
                 }
-                cb(null, true);
+                cb(null);
             });
         }
 
         function updateFavoriteCnt(cb) {
             var sql_update_video = 'UPDATE video SET favorite_cnt = favorite_cnt + 1 WHERE id = ?';
-            dbConn.query(sql_update_video, [favorite.vid], function(err, result) {
+            dbConn.query(sql_update_video, [favorite.vid], function(err) {
                 if (err) {
                     return cb(err);
                 }
-                cb(null, true);
+                cb(null);
             })
         }
 

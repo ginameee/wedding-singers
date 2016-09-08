@@ -35,26 +35,26 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
 router.get('/:sid/holidaies', isAuthenticated, function(req, res, next) {
     var userId;
 
-    if (req.params.sid == 'me') {
-        userId = req.user.id;
-    } else {
+     if (req.params.sid == 'me') {
+         userId = req.user.id;
+     } else {
         userId = req.params.sid;
-    }
+     }
 
     console.log(userId);
-    var holidaies = [];
+    var holidays = [];
 
-    Singer.findSingerHolidaies(userId, function(err, results) {
+    Singer.findSingerHolidays(userId, function(err, results) {
         if (err) {
             return next(err);
         }
 
-        holidaies = results;
+        holidays = results;
 
         res.send({
             code: 1,
             result: {
-                holidaies: holidaies
+                holidays: holidays
             }
         });
     });
@@ -69,7 +69,7 @@ router.put('/me/holidaies', isAuthenticated, function(req, res, next) {
     singer.user_id = req.user.id;
     singer.update_dates = req.body.update_dates;
 
-    Singer.registerSingerHolidaies(singer, function(err, results) {
+    Singer.registerSingerHolidays(singer, function(err, results) {
         if (err) return next(err);
         res.send({
             code: 1,

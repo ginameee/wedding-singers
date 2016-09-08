@@ -183,6 +183,8 @@ function findOrCreate(profile, callback) {
 
 // POST users/local 에서 회원을 등록할 때 사용되는 함수
 function registerUser(user, callback) {
+    var user_id;
+
     var sql_insert_user = 'INSERT INTO user(email, password, name, phone, type, registration_token) '+
                           'VALUES(?, SHA2(?, 512), ?, ?, ?, ?)';
     var sql_insert_singer = 'INSERT INTO singer(user_id) VALUES (?)';
@@ -210,7 +212,7 @@ function registerUser(user, callback) {
                     }
                     dbConn.commit(function () {
                         dbConn.release();
-                        callback(null);
+                        callback(null, user_id);
                     })
                 });
             } else {
@@ -223,7 +225,7 @@ function registerUser(user, callback) {
                     }
                     dbConn.commit(function () {
                         dbConn.release();
-                        callback(null);
+                        callback(null, user_id);
                     })
                 });
             }
@@ -234,26 +236,26 @@ function registerUser(user, callback) {
                 if (err) {
                     return cb(err);
                 }
-                user.id = result.insertId;
-                cb(null, user);
+                user_id = result.insertId;
+                cb(null);
             });
         }
 
         function registerCustomer(cb) {
-            dbConn.query(sql_insert_customer, [user.id], function(err, result) {
+            dbConn.query(sql_insert_customer, [user_id], function(err) {
                 if (err) {
                     return cb(err);
                 }
-                cb(null, true);
+                cb(null);
             });
         }
 
         function registerSinger(cb) {
-            dbConn.query(sql_insert_singer, [user.id], function(err, result) {
+            dbConn.query(sql_insert_singer, [user_id], function(err) {
                 if (err) {
                     return cb(err);
                 }
-                cb(null, result);
+                cb(null);
             });
         }
     });
@@ -395,11 +397,11 @@ function updateUser(user, callback) {
         function updateUserInfo(cb){
             console.log('updateUserInfo 수행');
             // dbConn.query(sql_update_user, [user.password, user.name, user.phone, user.photoURL, user.id], function(err, result) {
-            dbConn.query(sql_update_user, [user.password, user.file, user.id], function(err, result) {
+            dbConn.query(sql_update_user, [user.password, user.file, user.id], function(err) {
                 if (err) {
                     return cb(err);
                 }
-                cb(null, true);
+                cb(null);
             });
         }
 

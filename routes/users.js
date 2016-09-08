@@ -40,7 +40,11 @@ router.post('/local', isSecure, function(req, res, next) {
         }
         res.send({
           code: 1,
-          result: '성공'
+          result: {
+            id: result,
+            email: user.email,
+            name: user.name
+          }
         });
       });
     }
@@ -77,7 +81,11 @@ router.post('/facebook/token', isSecure, isAuthenticated, function(req, res, nex
         }
         res.send({
           code: 1,
-          result: '성공'
+          result: {
+            id: user.id,
+            email: req.body.email,
+            name: req.body.name
+          }
         });
       });
     }
@@ -118,8 +126,17 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
   user.id = req.user.id;
   user.name = req.user.name;
   user.email = req.user.email;
-  user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + path.basename(req.user.photoURL);
+  var filename = path.basename(req.user.photoURL);
+  console.log(filename);
+  console.log(path.parse(req.user.photoURL));
+  console.log(path.normalize(req.user.photoURL));
+  console.log(path.parse(req.user.photoURL));
+  console.log(path.parse('D:\\Didimdol\\weddingsingers\\uploads\\images\\profiles\\noname.JPG'))
+  // console.log(req.user.photoURL.split(path.delimiter).split(path.sep));
+
+  user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + filename;
   user.type = req.user.type;
+  user.phone = req.user.phone;
 
   User.findUserById(user, function(err, result) {
     if (err) {

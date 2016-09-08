@@ -10,6 +10,9 @@ var isSecure = require('./common').isSecure;
 var User = require('../models/user.js');
 var isAuthenticated = require('./common').isAuthenticated;
 
+// 로깅용 모듈
+var logger = require('../common/logger');
+
 passport.use(new FacebookTokenStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET

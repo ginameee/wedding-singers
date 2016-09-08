@@ -27,11 +27,12 @@ function registerReservation(reservation, callback) {
 // 자신의 예약목록을 확인하고자 할때 사용하는 함수
 function findReservationListOfUser(user, callback) {
     var reservation = {};
-    var sql_select_all_reservation = 'SELECT * FROM reservation WHERE customer_user_id = ? or singer_user_id = ?';
-    var sql_select_completed_reservation = 'SELECT * FROM reservation WHERE (customer_user_id = ? or singer_user_id = ?) AND status = 30';
+    var sql_select_all_reservation = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song  ' +
+                                      'FROM reservation WHERE customer_user_id = ? or singer_user_id = ?';
+    var sql_select_completed_reservation = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song FROM reservation WHERE (customer_user_id = ? or singer_user_id = ?) AND status = 30';
     var sql_user_info = 'SELECT name, photoURL FROM user WHERE id = ?';
-    var sql_select_reservation_date = 'SELECT * FROM reservation WHERE (customer_user_id = ? OR singer_user_id = ?) AND (year(reservation_dtime) = ? AND month(reservation_dtime) = ?) AND status = 30';
-    // var sql_select_reservation_date = 'SELECT date_format(reservation_dtime, \'%Y-%m-%d\') reservations FROM reservation WHERE singer_user_id = ?';
+    var sql_select_reservation_by_date = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song  FROM reservation WHERE (customer_user_id = ? OR singer_user_id = ?) AND (year(reservation_dtime) = ? AND month(reservation_dtime) = ?) AND status = 30';
+    var sql_select_reservation_date = 'SELECT date_format(reservation_dtime, \'%Y-%m-%d\') reservations FROM reservation WHERE singer_user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -39,16 +40,40 @@ function findReservationListOfUser(user, callback) {
         }
 
         var sql_select_reservation;
+
+        // 전체목록
         if (user.tab === 1) {
             sql_select_reservation = sql_select_all_reservation;
         } else {
             sql_select_reservation = sql_select_completed_reservation;
         }
 
+        // 완료된 예약 목록
         if (user.month) {
-            sql_select_reservation = sql_select_reservation_date;
+            sql_select_reservation = sql_select_reservation_by_date;
         }
 
+        if (user.date) {
+            var reservations = [];
+            sql_select_reservation = sql_select_reservation_date;
+
+            dbConn.query(sql_select_reservation, [user.id], function(err, results) {
+                dbConn.release();
+                if (err) {
+                   return callback(err);
+               }
+
+                async.each(results, function(item, done) {
+                    reservations.push(item.reservations);
+                    done(null);
+                }, function(err) {
+                    if (err) {
+                        return callback(err);
+                    }
+                    return callback(null, reservations);
+                });
+            });
+        } else {
             dbConn.query(sql_select_reservation, [user.id, user.id, user.year, user.month], function(err, results) {
                 console.log('예약 select 쿼리문 수행');
                 if (err) {
@@ -66,6 +91,7 @@ function findReservationListOfUser(user, callback) {
                     callback(null, results);
                 });
             });
+        }
 
 
         function addUserInfo(item, cb) {

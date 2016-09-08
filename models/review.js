@@ -6,6 +6,7 @@ var async = require('async');
 
 function registerReview(review, callback) {
     var sql_select_reservation = 'SELECT * FROM reservation WHERE id = ?';
+    var sql_select_review = 'SELECT * FROM review FROM '
     var sql_insert_review = 'INSERT INTO review(customer_user_id, singer_user_id, point, content, write_dtime) ' +
                              ' VALUES (?, ?, ?, ?, str_to_date(?, \'%Y-%m-%d\'))';
     var sql_update_point = 'UPDATE customer ' +
@@ -23,9 +24,13 @@ function registerReview(review, callback) {
                 return callback(err);
             }
 
-            if (results[0].customer_user_id !== review.customer_id) {
-                callback(null, 1);
+            if (!results[0]) {
+                return callback(null, 1)
             }
+            else if (results[0].customer_user_id !== review.customer_id) {
+                return callback(null, 1);
+            }
+
             dbConn.beginTransaction(function(err) {
                 if (err) {
                     return callback(err);
@@ -71,7 +76,7 @@ function registerReview(review, callback) {
 function selectReviewBySinger(select, callback) {
 
     var sql_select_review_all = 'SELECT id, customer_user_id, singer_user_id, point, content, write_dtime ' +
-                            'FROM review WHERE singer_user_id = ?';
+                                'FROM review WHERE singer_user_id = ?';
 
     var sql_select_review_sum = 'SELECT COUNT(*) review_cnt, AVG(point) review_point FROM review WHERE singer_user_id = ?'
 

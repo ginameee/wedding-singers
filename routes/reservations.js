@@ -71,6 +71,7 @@ router.get('/me', isAuthenticated, function(req, res, next) {
   user.tab = parseInt(req.query.tab || 1);
   user.year = req.query.year || 0;
   user.month = req.query.month || 0;
+  // user.date = req.query.date || 0;
 
   Reservation.findReservationListOfUser(user, function(err, results) {
     if (err) {
@@ -84,6 +85,26 @@ router.get('/me', isAuthenticated, function(req, res, next) {
   });
 });
 
+// --------------------------------------------------
+// HTTP GET /reservations?sid=1 : 싱어들의 예약 일 조회
+// --------------------------------------------------
+router.get('/', isAuthenticated, function(req, res, next) {
+
+  var user = {};
+  user.date = 1;
+  user.id = req.query.sid;
+
+  Reservation.findReservationListOfUser(user, function(err, results) {
+    if (err) {
+      return next(err);
+    }
+
+    res.send({
+      code: 1,
+      result: results
+    })
+  })
+});
 
 // --------------------------------------------------
 // HTTP GET /reservations/:id : 예약 상세 보기

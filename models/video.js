@@ -24,15 +24,25 @@ function findVideoByUserId(uid, callback) {
                 return callback(err);
             }
 
-            async.each(results, function(item, done) {
+
+            async.each(results, function(item_video, done) {
                 console.log('이치쿼리문수행');
-                dbConn.query(sql_select_video_hash, [item.id],function(err, results) {
+                dbConn.query(sql_select_video_hash, [item_video.id],function(err, results_hashes) {
                     if (err) {
                         dbConn.release();
                         return done(err);
                     }
-                    item.hash = results;
-                    videos.push(item);
+                    var hash = [];
+                    async.each(results_hashes, function(item_hash, done) {
+                        hash.push(item_hash.tag);
+                        done(null);
+                    }, function(err) {
+                        if (err) {
+                            return done(null);
+                        }
+                        item_video.hash = hash;
+                    });
+                    videos.push(item_video);
                     done(null);
                 });
             }, function(err) {
@@ -51,7 +61,10 @@ function findVideoByUserId(uid, callback) {
 
 
 function findVideoById(id, callback) {
-    var sql_select_video = 'SELECT * FROM video v JOIN user u ON (v.singer_user_id = u.id) WHERE v.id = ?';
+    // var sql_select_video = 'SELECT * FROM video v JOIN user u ON (v.singer_user_id = u.id) ' +
+    //                                               'JOIN singer s ON (u.id = s.user_id) ' +
+    //                                                'WHERE v.id = ?';
+    var sql_select_video = 'SELECT * FROM video v WHERE v.id = ?';
     var video = {};
 
     dbPool.getConnection(function(err, dbConn) {
@@ -65,13 +78,16 @@ function findVideoById(id, callback) {
                 return callback(err);
             }
 
+            video.id = results[0].id;
             video.title = results[0].title;
             video.hit = results[0].hit;
             video.favorite_cnt = results[0].favorite_cnt;
             video.url = results[0].url;
             video.write_dtime = results[0].write_dtime;
-            video.singer_name = results[0].name;
-            video.singer_id = results[0].singer_user_id;
+            // video.singer_name = results[0].name;
+            // video.singer_id = results[0].singer_user_id;
+            // video.singer_comment = results[0].comment;
+
 
             callback(null, video);
         });
@@ -262,6 +278,7 @@ function insertVideo(video, callback) {
 
 
 function listVideo(type, callback) {
+    console.log('listVideo 호출');
     var sql_select_new_videos = 'SELECT v.id id, u.name singer_name, title, hit, favorite_cnt, url, write_dtime ' +
                                 'FROM video v JOIN user u ON (v.singer_user_id = u.id) ' +
                                 'ORDER BY write_dtime DESC';
@@ -277,7 +294,7 @@ function listVideo(type, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            callback(err);
+            return callback(err);
         }
 
         dbConn.query(sql_select_videos, [], function(err, results) {
