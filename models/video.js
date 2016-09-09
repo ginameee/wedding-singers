@@ -114,6 +114,7 @@ function findVideoById(input, callback) {
 
 
 function findVideoByFilter(search, callback) {
+    console.log('-----------------------findVideoByFilter 들어옴 -----------------');
     var sql = [];
     sql.push('SELECT * ' +
              'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
@@ -133,6 +134,7 @@ function findVideoByFilter(search, callback) {
              'WHERE standard_price > ? AND ? AND ? AND ? AND ?');
 
     var filter = [];
+
     filter.push(search.price);
 
     async.each(search, function(item, done) {
@@ -146,9 +148,10 @@ function findVideoByFilter(search, callback) {
         if (err) {
             return callback(err);
         }
+        console.log('----------------------필터-------------------');
         console.log(filter);
         console.log(filter.length);
-        console.log(sql[(filter.length)-3]);
+        console.log(sql[(filter.length)-2]);
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
                 return callback(err);
@@ -297,10 +300,10 @@ function insertVideo(video, callback) {
 
 function listVideo(type, callback) {
     console.log('listVideo 호출');
-    var sql_select_new_videos = 'SELECT v.id id, u.name singer_name, title, hit, favorite_cnt, url, write_dtime ' +
+    var sql_select_new_videos = 'SELECT v.id id, u.name singer_name, title, hit, favorite_cnt, url, date_format(write_dtime, \'%Y-%m-%d\') write_dtime ' +
                                 'FROM video v JOIN user u ON (v.singer_user_id = u.id) ' +
                                 'ORDER BY write_dtime DESC';
-    var sql_select_popular_videos = 'SELECT v.id id, u.name singer_name, title, hit, favorite_cnt, url, write_dtime ' +
+    var sql_select_popular_videos = 'SELECT v.id id, u.name singer_name, title, hit, favorite_cnt, url, date_format(write_dtime, \'%Y-%m-%d\') write_dtime ' +
                                      'FROM video v JOIN user u ON (v.singer_user_id = u.id) ' +
                                      'ORDER BY favorite_cnt DESC';
     var sql_select_videos;

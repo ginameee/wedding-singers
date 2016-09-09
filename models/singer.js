@@ -9,8 +9,7 @@ var async = require('async');
 // HTTPS PUT /singers/me 요청에서 Singer 프로필 수정 시 수행되는 함수
 function updateSinger(singer, callback) {
     var sql_update_singer = 'UPDATE singer ' +
-                            'SET comment = ?, description = ?, standard_price = ?, special_price = ?, ' +
-                            'composition = ?, theme = ? ' +
+                            'SET comment = ?, description = ?, standard_price = ?, special_price = ?, location = ?, composition = ?, theme = ? ' +
                             'WHERE user_id = ?';
     var sql_select_singer_song = 'SELECT id, song FROM singer_song WHERE singer_user_id = ?';
     var sql_insert_singer_song = 'INSERT INTO singer_song(song, singer_user_id) VALUES(?, ?)';
@@ -43,7 +42,7 @@ function updateSinger(singer, callback) {
         });
 
         function registerSingerInfo(cb) {
-            dbConn.query(sql_update_singer, [singer.comment, singer.description, singer.standard_price, singer.special_price, singer.composition, singer.theme, singer.user_id], function(err) {
+            dbConn.query(sql_update_singer, [singer.comment, singer.description, singer.standard_price, singer.special_price, singer.location, singer.composition, singer.theme, singer.user_id], function(err) {
                 if (err) {
                     return cb(err);
                 }
@@ -112,9 +111,6 @@ function findSingerById(id, callback) {
                     return cb(err);
                 }
 
-                console.log(id);
-                console.log(results[0]);
-
                 singer.user_id = results[0].user_id;
                 singer.email = results[0].email || '';
                 singer.name = results[0].name;
@@ -122,11 +118,11 @@ function findSingerById(id, callback) {
                 singer.description = results[0].description || '';
                 singer.standard_price = parseInt(results[0].standard_price || 0 );
                 singer.special_price = parseInt(results[0].special_price || 0);
-                singer.composition = parseInt(results[0].theme || 0);
+                singer.composition = parseInt(results[0].composition || 0);
+                singer.location = parseInt(results[0].location || 0);
+                singer.theme = parseInt(results[0].theme || 0);
                 singer.penalty = parseInt(results[0].penalty);
                 singer.photoURL = path.join('http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:',process.env.HTTP_PORT,'/images/',path.basename(results[0].photoURL));
-                console.log(results[0].photoURL);
-                console.log(path.basename(results[0].photoURL));
 
                 cb(null);
             });

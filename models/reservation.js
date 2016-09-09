@@ -214,6 +214,9 @@ function updateReservation(param, callback) {
 
 function deleteAfterTime(param, callback) {
     var sql_delete_reservation = 'DELETE FROM reservation WHERE id = ?';
+    var sql_select_reservation = 'SELECT FROM resrvation WHERE id = ?';
+
+    dbPool.getConnection();
     callback(null, 'removed!!!');
 }
 module.exports.registerReservation = registerReservation;

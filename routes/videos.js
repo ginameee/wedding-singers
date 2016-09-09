@@ -30,71 +30,72 @@ router.get('/me', isAuthenticated, function(req, res, next) {
     });
 });
 
-
 // --------------------------------------------------
-// HTTP GET /videos?sid : 싱어의 다른 동영상 보기
+// HTTP GET /videos?theme=3&location=2'&price=0&composition=0&keyword=0: 동영상 검색
+// HTTP GET /videos?sid=2 다른 싱어의 동영상 검색
 // --------------------------------------------------
 router.get('/', isAuthenticated, function(req, res, next) {
-    logger.log('debug', 'content-type: %s', req.headers['content-type']);
-    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
-    logger.log('debug', 'singer_id: %d', req.query.sid);
 
-    var uid = req.query.sid;
+    if (req.query.sid) {
+        logger.log('debug', 'content-type: %s', req.headers['content-type']);
+        logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+        logger.log('debug', 'singer_id: %d', req.query.sid);
 
-    Video.findVideoByUserId(uid, function(err, results) {
-        if (err) {
-            return next(err);
-        }
-        res.send({
-            code: 1,
-            result: results
+        var uid = req.query.sid;
+
+        Video.findVideoByUserId(uid, function (err, results) {
+            if (err) {
+                return next(err);
+            }
+            res.send({
+                code: 1,
+                result: results
+            });
         });
-    });
-});
+
+    } else if (req.query.theme || req.query.location || req.query.composition || req.query.keyword) {
+        console.log('조건검색들어옴');
+        logger.log('debug', 'content-type: %s', req.headers['content-type']);
+        logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+        logger.log('debug', 'theme: %d', req.query.theme);
+        logger.log('debug', 'location: %d', req.query.location);
+        logger.log('debug', 'composition: %d', req.query.composition);
+        logger.log('debug', 'vh.tag: %s', req.query.keyword);
 
 
-// --------------------------------------------------
-// HTTP GET /videos?theme=3&location=2&start_date='2016-05-32'&end_date='2016-05-32'&price=””&composition=””&hash=””&pageNo=””&rowCnt=”” : 동영상 검색
-// --------------------------------------------------
-router.get('/', function(req, res, next) {
-    logger.log('debug', 'content-type: %s', req.headers['content-type']);
-    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
-    logger.log('debug', 'theme: %d', req.query.theme);
-    logger.log('debug', 'location: %d', req.query.location);
-    logger.log('debug', 'composition: %d', req.query.composition);
-    logger.log('debug', 'vh.tag: %s', req.query.theme);
+        // var rowCnt = req.query.rowCnt || 0;
+        // var pageNo = req.query.pageNo || 1;
 
+        var search = [];
+        search.push({ 'theme': parseInt(req.query.theme) || 0 });
+        search.push({ 'location': parseInt(req.query.location) || 0 });
+        search.push({ 'composition': parseInt(req.query.composition) || 0});
+        search.push({ 'vh.tag':  req.query.keyword || 0 });
+        search.price = parseInt(req.query.price) || 0;
 
-    // var rowCnt = req.query.rowCnt || 0;
-    // var pageNo = req.query.pageNo || 1;
-
-    var search = [];
-    search.push({ 'theme': req.query.theme || 0 });
-    search.push({ 'location': req.query.location || 0 });
-    search.push({ 'composition': req.query.composition || 0});
-    search.push({ 'vh.tag': req.query.keyword || 0 });
-    search.price = req.query.price || 0;
-
-
-
-    // 필터 적용해서 검색 가능하게 수정
-    // 사용자가 입력한 조건들을 모아놓은 객체를 이용해서 조건검색을 실시할 것임.
-    Video.findVideoByFilter(search, function(err, results) {
-        if (err) {
-            return next(err);
-        }
-        res.send({
-            code:1,
-            // rowCnt: rowCnt,
-            // pageNo: pageNo,
-            result: results
+        // 필터 적용해서 검색 가능하게 수정
+        // 사용자가 입력한 조건들을 모아놓은 객체를 이용해서 조건검색을 실시할 것임.
+        Video.findVideoByFilter(search, function(err, results) {
+            if (err) {
+                return next(err);
+            }
+            res.send({
+                code:1,
+                // rowCnt: rowCnt,
+                // pageNo: pageNo,
+                result: results
+            });
         });
-    });
+    }
 });
-
 
 // --------------------------------------------------
 // HTTP GET /videos/main?type=2: 메인페이지 동영상 목록
+// --------------------------------------------------
+
+
+// --------------------------------------------------
+// HTTP GET /videos?sid : 싱어의 다른 동영상 보기
 // --------------------------------------------------
 router.get('/main', function(req, res, next) {
     logger.log('debug', 'content-type: %s', req.headers['content-type']);

@@ -12,6 +12,7 @@ var logger = require('../common/logger');
 // HTTPS PUT /singers/me : Singer 프로필 수정
 // --------------------------------------------------
 router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
+
     var singer = {};
     singer.user_id = req.user.id;
     singer.comment = req.body.comment || '';
@@ -19,8 +20,16 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
     singer.standard_price = parseInt(req.body.standard_price || 0);
     singer.special_price = parseInt(req.body.special_price || 0);
     singer.composition = parseInt(req.body.composition || 1);
+    singer.location = parseInt(req.body.location || 1);
     singer.theme = parseInt(req.body.theme || 1);
     singer.songs = req.body.songs || [''];
+    console.log('------------------------싱어매개변수----------------------');
+    console.log(singer);
+
+    logger.log('debug', 'content-type: %s', req.headers['content-type']);
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    logger.log('debug', 'rid: %d', req.params.rid);
+    logger.log('debug', 'param: %s', singer);
 
     Singer.updateSinger(singer, function(err, result) {
         if (err) return next(err);

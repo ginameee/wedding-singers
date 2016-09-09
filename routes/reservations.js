@@ -78,7 +78,7 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
                    future.hour() + " " +
                    future.date() + " " +
                    future.month() + " ";
-    crontime = '* * * * * *';
+    // crontime = '* * * * * *';
     var job = new CronJob(crontime, function() {
       Reservation.deleteAfterTime(param, function(err, result) {
         console.log(result);
