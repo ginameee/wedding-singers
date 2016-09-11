@@ -52,7 +52,6 @@ passport.use(new LocalStrategy({usernameField: 'email', passwordField: 'password
 
 passport.serializeUser(function(user, done) {
     // user.id로 세션정보를 저장
-    console.log('passport.serializeUser가 넘겨받은 user.id : ' + user.id);
     done(null, user.id);
 });
 

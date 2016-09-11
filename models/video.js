@@ -47,7 +47,6 @@ function findVideoByUserId(uid, callback) {
                     dbConn.release();
                     return callback(err);
                 }
-                console.log({ videos: videos});
                 callback(null, videos);
                 dbConn.release();
             });
@@ -106,6 +105,7 @@ function findVideoById(input, callback) {
                 video.write_dtime = results[0].write_dtime;
                 video.favorite_cnt = results[0].favorite_cnt;
                 video.title = results[0].title;
+                video.singer_id = results[0].singer_user_id;
                 cb(null);
             });
         })
@@ -114,24 +114,38 @@ function findVideoById(input, callback) {
 
 
 function findVideoByFilter(search, callback) {
-    console.log('-----------------------findVideoByFilter 들어옴 -----------------');
     var sql = [];
-    sql.push('SELECT * ' +
+    sql.push('SELECT v.id, title, url, hit, favorite_cnt, date_format(write_dtime, \'%Y-%m-%d\') write_dtime, name singer_name, user_id singer_id ' +
              'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
+             'JOIN user u ON (s.user_id = u.id) ' +
+             'RIGHT JOIN video_hash vh ON (v.id = vh.video_id) '+
+             'WHERE standard_price > ? ' +
+             'GROUP BY id');
+    sql.push('SELECT v.id, title, url, hit, favorite_cnt, date_format(write_dtime, \'%Y-%m-%d\') write_dtime, name singer_name, user_id singer_id ' +
+             'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
+                           'JOIN user u ON (s.user_id = u.id) ' +
                            'RIGHT JOIN video_hash vh ON (v.id = vh.video_id) '+
-             'WHERE standard_price > ? AND ? ');
-    sql.push('SELECT * ' +
+             'WHERE standard_price > ? AND ? ' +
+             'GROUP BY id');
+    sql.push('SELECT v.id, title, url, hit, favorite_cnt, date_format(write_dtime, \'%Y-%m-%d\') write_dtime, name singer_name, user_id singer_id ' +
              'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
+                          'JOIN user u ON (s.user_id = u.id) ' +
                           'RIGHT JOIN video_hash vh ON (v.id = vh.video_id) '+
-             'WHERE standard_price > ? AND ? AND ? ');
-    sql.push('SELECT * ' +
+             'WHERE standard_price > ? AND ? AND ? ' +
+             'GROUP BY id');
+    sql.push('SELECT v.id, title, url, hit, favorite_cnt, date_format(write_dtime, \'%Y-%m-%d\') write_dtime, name singer_name, user_id singer_id ' +
              'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
+                          'JOIN user u ON (s.user_id = u.id) ' +
                           'RIGHT JOIN video_hash vh ON (v.id = vh.video_id) '+
-             'WHERE standard_price > ? AND ? AND ? AND ?');
-    sql.push('SELECT * ' +
+             'WHERE standard_price > ? AND ? AND ? AND ? ' +
+             'GROUP BY id');
+    sql.push('SELECT v.id, title, url, hit, favorite_cnt, date_format(write_dtime, \'%Y-%m-%d\') write_dtime, name singer_name, user_id singer_id ' +
              'FROM video v JOIN singer s ON (v.singer_user_id = s.user_id) ' +
+                          'JOIN user u ON (s.user_id = u.id) ' +
                           'RIGHT JOIN video_hash vh ON (v.id = vh.video_id) '+
-             'WHERE standard_price > ? AND ? AND ? AND ? AND ?');
+             'WHERE standard_price > ? AND ? AND ? AND ? AND ? ' +
+             'GROUP BY id');
+
 
     var filter = [];
 
@@ -148,15 +162,19 @@ function findVideoByFilter(search, callback) {
         if (err) {
             return callback(err);
         }
-        console.log('----------------------필터-------------------');
-        console.log(filter);
-        console.log(filter.length);
-        console.log(sql[(filter.length)-2]);
+        var use_sql;
+
+        if (!((filter.length)-1)) {
+            use_sql = sql[0];
+        } else {
+            use_sql = sql[(filter.length)-1];
+        }
+
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
                 return callback(err);
             }
-            dbConn.query(sql[(filter.length)-2], filter, function(err, results) {
+            dbConn.query(use_sql, filter, function(err, results) {
                 dbConn.release();
                 if (err) {
                     return callback(err);
@@ -299,11 +317,10 @@ function insertVideo(video, callback) {
 
 
 function listVideo(type, callback) {
-    console.log('listVideo 호출');
-    var sql_select_new_videos = 'SELECT v.id id, u.name singer_name, title, hit, favorite_cnt, url, date_format(write_dtime, \'%Y-%m-%d\') write_dtime ' +
+    var sql_select_new_videos = 'SELECT v.id id, u.id singer_id, u.name singer_name, title, hit, favorite_cnt, url, date_format(write_dtime, \'%Y-%m-%d\') write_dtime ' +
                                 'FROM video v JOIN user u ON (v.singer_user_id = u.id) ' +
                                 'ORDER BY write_dtime DESC';
-    var sql_select_popular_videos = 'SELECT v.id id, u.name singer_name, title, hit, favorite_cnt, url, date_format(write_dtime, \'%Y-%m-%d\') write_dtime ' +
+    var sql_select_popular_videos = 'SELECT v.id id, u.id singer_id, u.name singer_name, title, hit, favorite_cnt, url, date_format(write_dtime, \'%Y-%m-%d\') write_dtime ' +
                                      'FROM video v JOIN user u ON (v.singer_user_id = u.id) ' +
                                      'ORDER BY favorite_cnt DESC';
     var sql_select_videos;

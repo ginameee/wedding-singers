@@ -24,6 +24,7 @@ router.post('/local', isSecure, function(req, res, next) {
   user.phone = req.body.phone;
   user.type = parseInt(req.body.type);
   user.registration_token = req.body.registration_token;
+  user.photoURL = 'noname.jpg';
 
   logger.log('debug', 'content-type: %s', req.headers['content-type']);
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
@@ -71,6 +72,7 @@ router.post('/facebook/token', isSecure, isAuthenticated, function(req, res, nex
   user.name = req.body.name;
   user.type = parseInt(req.body.type);
   user.registration_token = req.body.registration_token;
+  user.photoURL = 'noname.jpg';
 
   logger.log('debug', 'content-type: %s', req.headers['content-type']);
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
@@ -142,14 +144,9 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
   user.name = req.user.name;
   user.email = req.user.email;
   var filename = path.basename(req.user.photoURL);
-  console.log(filename);
-  console.log(path.parse(req.user.photoURL));
-  console.log(path.normalize(req.user.photoURL));
-  console.log(path.parse(req.user.photoURL));
-  console.log(path.parse('D:\\Didimdol\\weddingsingers\\uploads\\images\\profiles\\noname.JPG'))
   // console.log(req.user.photoURL.split(path.delimiter).split(path.sep));
 
-  user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + filename;
+  user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + filename;
   user.type = req.user.type;
   user.phone = req.user.phone;
 
@@ -160,7 +157,6 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     console.log(result);
     user.point = result;
     // user.photoURL = 'http://localhost:' + process.env.HTTP_PORT + '/images/'  + path.basename(result.photoURL);
-
     res.send({
       code: 1,
       result: user
@@ -179,8 +175,9 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
   logger.log('debug', 'password: %s', req.body.password);
 
   var user = {};
+  console.log(req.user);
   user.id = req.user.id;
-  user.password = req.body.password;
+  // user.password = req.body.password;
   // user.name = req.body.name;
   // user.phone = req.body.phone;
   // user.photoURL = req.body.url;

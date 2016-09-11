@@ -3,10 +3,11 @@
  */
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
+var path = require('path');
 
 function registerReview(review, callback) {
     var sql_select_reservation = 'SELECT * FROM reservation WHERE id = ?';
-    var sql_select_review = 'SELECT * FROM review FROM '
+    var sql_select_review = 'SELECT * FROM review FROM ';
     var sql_insert_review = 'INSERT INTO review(customer_user_id, singer_user_id, point, content, write_dtime) ' +
                              ' VALUES (?, ?, ?, ?, str_to_date(?, \'%Y-%m-%d\'))';
     var sql_update_point = 'UPDATE customer ' +
@@ -53,7 +54,7 @@ function registerReview(review, callback) {
 
 
             function insertReview(cb) {
-                dbConn.query(sql_insert_review, [review.customer_id, review.singer_id, review.point, review.content, review.write_dtime], function(err) {
+                dbConn.query(sql_insert_review, [review.customer_id, results[0].singer_user_id, review.point, review.content, review.write_dtime], function(err) {
                     if (err) {
                         return cb(err);
                     }
@@ -75,7 +76,7 @@ function registerReview(review, callback) {
 
 function selectReviewByUser(select, callback) {
 
-    var sql_select_review_all = 'SELECT id, customer_user_id, singer_user_id, point, content, write_dtime ' +
+    var sql_select_review_all = 'SELECT id, customer_user_id, singer_user_id, point, content, date_format(write_dtime, \'%Y-%m-%d\') ' +
                                  'FROM review WHERE ?';
     var sql_select_review_sum = 'SELECT COUNT(*) review_cnt, AVG(point) review_point FROM review WHERE ?';
     var sql_select_user_info = 'SELECT * FROM user WHERE id = ?';
@@ -97,7 +98,7 @@ function selectReviewByUser(select, callback) {
 
             if (select.rating) {
                 dbConn.release();
-                return callback(null, results_review);
+                return callback(null, results_review[0]);
             }
 
             async.map(results_review, function (item, done) {
@@ -117,10 +118,10 @@ function selectReviewByUser(select, callback) {
                     }
 
                     item[user_info.param + 'name'] = results_user[0].name;
+                    item[user_info.param + 'photoURL'] = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(results_user[0].photoURL);;
                     done(null, item);
                 });
             }, function(err, results) {
-                console.log(results);
                 dbConn.release();
                 if (err) {
                     return callback(err);

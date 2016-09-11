@@ -23,8 +23,6 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
     singer.location = parseInt(req.body.location || 1);
     singer.theme = parseInt(req.body.theme || 1);
     singer.songs = req.body.songs || [''];
-    console.log('------------------------싱어매개변수----------------------');
-    console.log(singer);
 
     logger.log('debug', 'content-type: %s', req.headers['content-type']);
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
@@ -111,11 +109,11 @@ router.get('/:sid', function(req, res, next) {
 
     singer.simple = parseInt(req.query.simple || 0);
 
+
     logger.log('debug', 'content-type: %s', req.headers['content-type']);
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     logger.log('debug', 'singer.user_id: %d ', singer.user_id);
     logger.log('debug', 'simple: %d', singer.simple);
-
 
 
     Singer.findSingerById(singer.user_id, function(err, result) {
@@ -127,7 +125,6 @@ router.get('/:sid', function(req, res, next) {
             singer.name = result.name;
             singer.comment = result.comment;
             singer.photoURL = result.photoURL;
-            singer.songs = result.songs;
             singer.standard_price = result.standard_price;
             singer.special_price = result.special_price;
         }
@@ -163,7 +160,7 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     singer.user_id = req.user.id;
     singer.email = req.user.email;
     singer.name = req.user.name;
-    singer.photoURL = 'http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(req.user.photoURL);
+    singer.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(req.user.photoURL);
     singer.simple = parseInt(req.query.simple || 0);
 
     Singer.findSingerById(singer.user_id, function(err, result) {

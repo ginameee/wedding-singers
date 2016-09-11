@@ -1,6 +1,7 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
 var fs = require('fs');
+
 // passport.deserializeUser에서 세션을 통해 user객체를 생성할때 사용
 function findUser(id, callback) {
     console.log("findUser: " + id);
@@ -34,7 +35,6 @@ function findUser(id, callback) {
 
 
 function findUserById(user, callback) {
-    console.log('findUserById 수행');
 
     var sql_select_singer = 'SELECT * FROM singer WHERE user_id = ?';
     var sql_select_customer = 'SELECT * FROM customer WHERE user_id = ?';
@@ -185,8 +185,8 @@ function findOrCreate(profile, callback) {
 function registerUser(user, callback) {
     var user_id;
 
-    var sql_insert_user = 'INSERT INTO user(email, password, name, phone, type, registration_token) '+
-                          'VALUES(?, SHA2(?, 512), ?, ?, ?, ?)';
+    var sql_insert_user = 'INSERT INTO user(email, password, name, phone, type, registration_token, photoURL) '+
+                          'VALUES(?, SHA2(?, 512), ?, ?, ?, ?, ?)';
     var sql_insert_singer = 'INSERT INTO singer(user_id) VALUES (?)';
     var sql_insert_customer= 'INSERT INTO customer(user_id) VALUES (?)';
 
@@ -232,7 +232,7 @@ function registerUser(user, callback) {
         });
 
         function insertUser(cb) {
-            dbConn.query(sql_insert_user, [user.email, user.password, user.name, user.phone, user.type, user.registration_token], function(err, result) {
+            dbConn.query(sql_insert_user, [user.email, user.password, user.name, user.phone, user.type, user.registration_token, user.photoURL], function(err, result) {
                 if (err) {
                     return cb(err);
                 }
@@ -265,7 +265,7 @@ function registerUser(user, callback) {
 // POST users/facebook/token 에서 회원가입을 할 때 호출되는 함수
 function registerUserFB(user, callback) {
     var sql_update_user = 'UPDATE user ' +
-                          'SET email = ?, name = ?, phone = ?, type = ? '+
+                          'SET email = ?, name = ?, phone = ?, type = ?, photoURL = ? '+
                           'WHERE id = ?';
     var sql_insert_singer = 'INSERT INTO singer(user_id) VALUES (?)';
     var sql_insert_customer= 'INSERT INTO customer(user_id) VALUES (?)';
@@ -312,7 +312,7 @@ function registerUserFB(user, callback) {
         });
 
         function updateUserInfo(cb) {
-                dbConn.query(sql_update_user, [user.email, user.name, user.phone, user.type, user.id], function(err, result) {
+                dbConn.query(sql_update_user, [user.email, user.name, user.phone, user.type, user.photoURL, user.id], function(err, result) {
                     if (err) {
                         return cb(err);
                     }
@@ -365,7 +365,6 @@ function updateUser(user, callback) {
     // var sql_update_user = 'UPDATE user ' +
     //     'SET password = ?, name = ?, phone = ?, photoURL = ? '+
     //     'WHERE id = ?';
-    console.log('updateUser 실행');
     var sql_update_user = 'UPDATE user ' +
                           'SET password = sha2(?, 512), photoURL = ? WHERE id = ?';
     var sql_select_filepath = 'SELECT photoURL FROM user WHERE id = ?';
@@ -391,11 +390,9 @@ function updateUser(user, callback) {
                     dbConn.release();
                 })
             });
-
         });
 
         function updateUserInfo(cb){
-            console.log('updateUserInfo 수행');
             // dbConn.query(sql_update_user, [user.password, user.name, user.phone, user.photoURL, user.id], function(err, result) {
             dbConn.query(sql_update_user, [user.password, user.file, user.id], function(err) {
                 if (err) {

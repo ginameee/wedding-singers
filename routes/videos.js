@@ -92,11 +92,6 @@ router.get('/', isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 // HTTP GET /videos/main?type=2: 메인페이지 동영상 목록
 // --------------------------------------------------
-
-
-// --------------------------------------------------
-// HTTP GET /videos?sid : 싱어의 다른 동영상 보기
-// --------------------------------------------------
 router.get('/main', function(req, res, next) {
     logger.log('debug', 'content-type: %s', req.headers['content-type']);
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);

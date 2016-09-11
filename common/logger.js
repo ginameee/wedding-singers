@@ -34,7 +34,7 @@ var logger = new winston.Logger({
       dirname: path.join(__dirname, '../logs'), // 만들어놓은 위치에
       filename: 'debug_logs_', // 이러한 이름의 파일에
       datePattern: 'yyyy-MM-ddTHH.log', // 시간대 별로 로그를 만들어서
-      maxsize: 1024, // 하나의 파일의 최대 사이즈를 의미한다 지금은 1KB, 커스터마이징이 가능하다. 파일의 최대크기를 넘어가면 파일에 넘버링이 들어간다.
+      maxsize: 1024 * 1024, // 하나의 파일의 최대 사이즈를 의미한다 지금은 1KB, 커스터마이징이 가능하다. 파일의 최대크기를 넘어가면 파일에 넘버링이 들어간다.
       json: false // 포맷은 일반포맷 결과를 JSON으로 보고싶다면 true로 한다.
     })
   ],

@@ -85,7 +85,7 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
       });
       job.stop();
     }, function() {
-      
+
     }, true, timeZone);
   });
 });

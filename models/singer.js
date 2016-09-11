@@ -122,7 +122,8 @@ function findSingerById(id, callback) {
                 singer.location = parseInt(results[0].location || 0);
                 singer.theme = parseInt(results[0].theme || 0);
                 singer.penalty = parseInt(results[0].penalty);
-                singer.photoURL = path.join('http://ec2-52-78-147-230.ap-northeast-2.compute.amazonaws.com:',process.env.HTTP_PORT,'/images/',path.basename(results[0].photoURL));
+                // singer.photoURL = path.join('http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com','images/',path.basename(results[0].photoURL));
+                singer.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/' + path.basename(results[0].photoURL);
 
                 cb(null);
             });
@@ -171,7 +172,6 @@ function findSingerHolidays(userId, callback) {
             if (err) {
                 return callback(err);
             }
-            console.log(results);
             async.each(results, function(item, done) {
                 holidays.push(item.holiday);
                 done(null);

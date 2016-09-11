@@ -3,6 +3,7 @@
  */
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
+var path = require('path');
 
 
 
@@ -77,15 +78,12 @@ function findReservationListOfUser(user, callback) {
             });
         } else {
             dbConn.query(sql_select_reservation, [user.id, user.id, user.year, user.month], function(err, results) {
-                console.log('예약 select 쿼리문 수행');
                 if (err) {
                     dbConn.release();
                     return callback(err);
                 }
-
-                console.log('map 수행 바로 직전');
+                
                 async.map(results, addUserInfo, function(err, results) {
-                    console.log('map 수행완료');
                     dbConn.release();
                     if (err) {
                         return callback(err);
@@ -97,7 +95,6 @@ function findReservationListOfUser(user, callback) {
 
 
         function addUserInfo(item, cb) {
-            console.log('map 수행 중');
             var param1 = 'customer';
             var param2 = 'singer';
             // 싱어일 때
@@ -115,7 +112,6 @@ function findReservationListOfUser(user, callback) {
                 }
                 item[param2+'_name'] = results[0].name;
                 item[param2+'_photoURL'] = results[0].photoURL;
-                console.log(item);
 
                 cb(null, item);
             });
@@ -152,9 +148,8 @@ function findReservationById(user, callback) {
             reservation.type = results[0].type;
 
             if (user.type === 1) {
-                console.log('싱어일때');
                 reservation.singer_name = user.name;
-                reservation.singer_photoURL = user.photoURL;
+                reservation.singer_photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(user.photoURL);
 
                 dbConn.query(sql_user_info, [reservation.customer_id], function(err, results) {
                     dbConn.release();
@@ -167,19 +162,15 @@ function findReservationById(user, callback) {
 
                 });
             } else {
-                console.log('유저일때');
                 reservation.customer_name = user.name;
-                reservation.customer_photoURL = user.photoURL;
+                reservation.customer_photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(user.photoURL);
 
                 dbConn.query(sql_user_info, [reservation.singer_id], function(err, results) {
-                    console.log('sql_user_info');
-                    console.log(reservation.singer_id);
                     dbConn.release();
                     if (err) {
                         return callback(err);
                     }
-
-                    console.log(results[0]);
+                    
                     reservation.singer_name = results[0].name;
                     reservation.singer_photoURL = results[0].photoURL;
                     return callback(null, reservation);
