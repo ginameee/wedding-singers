@@ -6,7 +6,7 @@ var async = require('async');
 
 // HTTP GET /videos/me 에서 싱어가 자신이 게시한 동영상을 찾을 때 사용되는 함수
 function findVideoByUserId(uid, callback) {
-    var sql_select_video = 'SELECT * FROM video WHERE singer_user_id = ?';
+    var sql_select_video = 'SELECT id, singer_user_id singer_id, title, url, hit, favorite_cnt, date_format(write_dtime, \'%Y-%m-%d %T\') write_dtime FROM video WHERE singer_user_id = ?';
     var sql_select_video_hash = 'SELECT tag FROM video_hash WHERE video_id = ?';
 
     var videos = [];
@@ -21,7 +21,6 @@ function findVideoByUserId(uid, callback) {
                 dbConn.release();
                 return callback(err);
             }
-
 
             async.each(results, function(item_video, done) {
                 dbConn.query(sql_select_video_hash, [item_video.id],function(err, results_hashes) {
@@ -346,8 +345,8 @@ function listVideo(type, callback) {
 }
 
 // HTTP DELETE /videos/:vid 에서 호출할 동영상을 지우는 함수
-function deleteVideo(vid, callback) {
-
+function deleteVideo(vids, callback) {
+    var sql_delete_video = 'DELETE FROM video WHERE id = ?';
     // dbConn 객체 얻어오기
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -356,46 +355,30 @@ function deleteVideo(vid, callback) {
 
         dbConn.beginTransaction(function(err) {
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
+            async.each(vids, function(item, done) {
+                dbConn.query(sql_delete_video, [item], function(err) {
+                    if (err) {
+                        return done(err);
+                    }
+                    return done(null);
+                });
 
-            async.series([deleteVideoHash, deleteVideoInfo], function (err) {
+            }, function(err) {
+                dbConn.release();
                 if (err) {
-                    return dbConn.rollback(function () {
+                    return dbConn.rollback(function() {
                         callback(err);
-                        dbConn.release();
                     });
                 }
-                dbConn.commit(function () {
+                dbConn.commit(function() {
                     callback(null);
-                    dbConn.release();
                 });
             });
         });
-
-        function deleteVideoHash(cb) {
-            var sql_delete_video_hash = 'DELETE FROM video_hash WHERE video_id = ?';
-
-            dbConn.query(sql_delete_video_hash, [vid], function(err, result) {
-                if (err) {
-                    return cb(err);
-                }
-                return cb(null, true);
-            });
-        }
-
-        function deleteVideoInfo(cb) {
-            var sql_delete_video = 'DELETE FROM video WHERE id = ?';
-
-            dbConn.query(sql_delete_video, [vid], function(err, result) {
-                if (err) {
-                    return cb(err);
-                }
-                return cb(null, true);
-            });
-        }
     });
-
 }
 
 

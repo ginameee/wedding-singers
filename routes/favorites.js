@@ -38,7 +38,6 @@ router.post('/', isAuthenticated, function(req, res, next) {
   logger.log('debug', 'content-type: %s', req.headers['content-type']);
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
 
-
   var favorite = {};
   favorite.uid = req.user.id;
   favorite.vid = req.body.vid;

@@ -7,7 +7,6 @@ var path = require('path');
 
 function registerReview(review, callback) {
     var sql_select_reservation = 'SELECT * FROM reservation WHERE id = ?';
-    var sql_select_review = 'SELECT * FROM review FROM ';
     var sql_insert_review = 'INSERT INTO review(customer_user_id, singer_user_id, point, content, write_dtime) ' +
                              ' VALUES (?, ?, ?, ?, str_to_date(?, \'%Y-%m-%d\'))';
     var sql_update_point = 'UPDATE customer ' +
@@ -76,9 +75,9 @@ function registerReview(review, callback) {
 
 function selectReviewByUser(select, callback) {
 
-    var sql_select_review_all = 'SELECT id, customer_user_id, singer_user_id, point, content, date_format(write_dtime, \'%Y-%m-%d\') ' +
+    var sql_select_review_all = 'SELECT id, customer_user_id, singer_user_id, point, content, date_format(write_dtime, \'%Y-%m-%d\') write_dtime ' +
                                  'FROM review WHERE ?';
-    var sql_select_review_sum = 'SELECT COUNT(*) review_cnt, AVG(point) review_point FROM review WHERE ?';
+    var sql_select_review_sum = 'SELECT COUNT(*) review_cnt, ROUND(AVG(point), 1) review_point FROM review WHERE ?';
     var sql_select_user_info = 'SELECT * FROM user WHERE id = ?';
 
 
@@ -118,7 +117,7 @@ function selectReviewByUser(select, callback) {
                     }
 
                     item[user_info.param + 'name'] = results_user[0].name;
-                    item[user_info.param + 'photoURL'] = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(results_user[0].photoURL);;
+                    item[user_info.param + 'photoURL'] = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(results_user[0].photoURL);
                     done(null, item);
                 });
             }, function(err, results) {

@@ -15,9 +15,7 @@ router.get('/me', isAuthenticated, function(req, res, next) {
     logger.log('debug', 'content-type: %s', req.headers['content-type']);
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
 
-    console.log('내 동영상 보기');
     var uid = req.user.id;
-    console.log(uid);
 
     Video.findVideoByUserId(uid, function(err, results) {
         if (err) {
@@ -54,7 +52,6 @@ router.get('/', isAuthenticated, function(req, res, next) {
         });
 
     } else if (req.query.theme || req.query.location || req.query.composition || req.query.keyword) {
-        console.log('조건검색들어옴');
         logger.log('debug', 'content-type: %s', req.headers['content-type']);
         logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
         logger.log('debug', 'theme: %d', req.query.theme);
@@ -202,14 +199,20 @@ module.exports = router;
 // --------------------------------------------------
 // HTTP DELETE /videos/:vid : 동영상 삭제
 // --------------------------------------------------
-router.delete('/:vid', isAuthenticated, function(req, res, next) {
+router.delete('/', isAuthenticated, function(req, res, next) {
     logger.log('debug', 'content-type: %s', req.headers['content-type']);
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
-    logger.log('debug', 'vid: %d', req.params.vid);
+    logger.log('debug', 'vid: %d', req.body.vid);
 
-    var vid = req.params.vid;
+    var vids = [];
+    if (!(req.body.vid instanceof Array)){
+        vids.push(req.body.vid);
+    } else {
+        vids = req.body.vid;
+    }
+    console.log(vids);
 
-    Video.deleteVideo(vid, function(err, result) {
+    Video.deleteVideo(vids, function(err) {
         if (err) {
             return next(err);
         }

@@ -24,7 +24,7 @@ router.get('/', isAuthenticated, function(req, res, next){
   var select = [];
   select.push({singer_user_id: parseInt(req.query.sid)});
   select.rating = parseInt(req.query.rating || 0);
-  select.type = 2;
+  select.type = 1;
 
   logger.log('debug', 'sid: %d', select.sid);
   logger.log('debug', 'rating: %d', select.rating);
@@ -51,8 +51,6 @@ router.get('/me', function(req, res, next) {
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
 
   var select = [];
-  console.log('현재 유저객체');
-  console.log(req.user);
   select.type = req.user.type;
 
   if (select.type == 1) {

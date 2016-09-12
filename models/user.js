@@ -93,10 +93,6 @@ function findUserByEmail(email, callback) {
             if (results.length === 0) {
                 return callback(null, null);
             }
-
-            console.log({
-                result: results[0]
-            });
             callback(null, results[0]);
         });
     })
@@ -367,7 +363,23 @@ function updateUser(user, callback) {
     //     'WHERE id = ?';
     var sql_update_user = 'UPDATE user ' +
                           'SET password = sha2(?, 512), photoURL = ? WHERE id = ?';
+    var sql_update_file = 'UPDATE user ' +
+                          'SET photoURL = ? WHERE id = ?';
+    var sql_update_password = 'UPDATE user ' +
+                              'SET password = sha2(?, 512) WHERE id = ?';
     var sql_select_filepath = 'SELECT photoURL FROM user WHERE id = ?';
+
+    var params = [user.password, user.file, user.id];
+
+    if (!user.password) {
+        sql_update_user = sql_update_file;
+        params = [user.file, user.id];
+    }
+
+    if (!user.file) {
+        sql_update_user = sql_update_password;
+        params = [user.password, user.id];
+    }
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -386,7 +398,7 @@ function updateUser(user, callback) {
                     });
                 }
                 dbConn.commit(function () {
-                    callback(null, true);
+                    callback(null);
                     dbConn.release();
                 })
             });
@@ -394,7 +406,7 @@ function updateUser(user, callback) {
 
         function updateUserInfo(cb){
             // dbConn.query(sql_update_user, [user.password, user.name, user.phone, user.photoURL, user.id], function(err, result) {
-            dbConn.query(sql_update_user, [user.password, user.file, user.id], function(err) {
+            dbConn.query(sql_update_user, params, function(err) {
                 if (err) {
                     return cb(err);
                 }

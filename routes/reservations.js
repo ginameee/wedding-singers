@@ -28,7 +28,14 @@ router.post('/', isAuthenticated, function(req, res, next) {
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
   logger.log('debug', 'input: %j', reservation, {});
 
-  Reservation.registerReservation(reservation, function(err) {
+  if (req.user.type === 1) {
+    return res.send({
+      code: 2,
+      result: 'Customer로 로그인 하세요!'
+    })
+  }
+
+  Reservation.registerReservation(reservation, function(err, result) {
     if (err) {
       return next(err);
     }
@@ -36,8 +43,34 @@ router.post('/', isAuthenticated, function(req, res, next) {
       code: 1,
       result: '성공'
     });
-  });
 
+    var param = {};
+    param.rid = result;
+    param.type = 11;
+
+    var timeZone = "Asia/Seoul";
+    var day = 2;
+    var future = moment().tz(timeZone).add(day, 's');
+    var crontime = future.second() + " " +
+        future.minute() + " " +
+        future.hour() + " " +
+        future.date() + " " +
+        future.month() + " ";
+    // crontime = '05 * * * * *';
+
+    var job = new CronJob(crontime, function () {
+      logger.log('debug', 'CronJob Started');
+      Reservation.updateReservation(param, function (err) {
+        if (err) {
+          logger.log('debug', err);
+        }
+        logger.log('debug', 'Reservation data has changed!!! By CronJob');
+      });
+      job.stop();
+    }, function () {
+      logger.log('debug', 'CronJob Completed');
+    }, true, timeZone);
+  });
 });
 
 
@@ -53,7 +86,7 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
 
   var param = {};
   param.rid = req.params.rid;
-  param.type = req.body.type;
+  param.type = parseInt(req.body.type);
 
   console.log(param.type);
 
@@ -61,37 +94,41 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
     if (err) {
       return next(err);
     }
+    
     res.send({
       code: 1,
       result: '성공'
     });
 
-    var timeZone = "Asia/Seoul";
-    var day = 7;
-    if (param.type === 10) {
-      day = 1
+    if ((param.type % 2 )== 1) {
+      var timeZone = "Asia/Seoul";
+      var day = 1;
+      var future = moment().tz(timeZone).add(day, 's');
+      var crontime = future.second() + " " +
+          future.minute() + " " +
+          future.hour() + " " +
+          future.date() + " " +
+          future.month() + " ";
+      // crontime = '05 * * * * *';
+
+      var job = new CronJob(crontime, function () {
+        logger.log('debug', 'CronJob Started');
+        Reservation.deleteReservation(param.rid, function (err, result) {
+          if (err) {
+            logger.log('debug', err)
+          }
+          logger.log('debug', result);
+        });
+        job.stop();
+      }, function () {
+        logger.log('debug', 'CronJob Completed');
+      }, true, timeZone);
     }
-
-    var future = moment().tz(timeZone).add(1, 's');
-    var crontime = future.second() + " " +
-                   future.minute() + " " +
-                   future.hour() + " " +
-                   future.date() + " " +
-                   future.month() + " ";
-    // crontime = '* * * * * *';
-    var job = new CronJob(crontime, function() {
-      Reservation.deleteAfterTime(param, function(err, result) {
-        console.log(result);
-      });
-      job.stop();
-    }, function() {
-
-    }, true, timeZone);
   });
 });
 
 
-// --------------------------------------------------
+// -------------------------------------------------- 
 // HTTP GET /reservations/me : 예약 목록 조회
 // --------------------------------------------------
 router.get('/me', isAuthenticated, function(req, res, next) {
@@ -112,6 +149,7 @@ router.get('/me', isAuthenticated, function(req, res, next) {
   user.tab = parseInt(req.query.tab || 1);
   user.year = req.query.year || 0;
   user.month = req.query.month || 0;
+  console.log(user.type);
   // user.date = req.query.date || 0;
 
   Reservation.findReservationListOfUser(user, function(err, results) {
@@ -154,7 +192,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
-// HTTP GET /reservations/:id : 예약 상세 보기
+// HTTP GET /reservations/:rid : 예약 상세 보기
 // --------------------------------------------------
 router.get('/:rid', isAuthenticated, function(req, res, next) {
 
@@ -169,6 +207,14 @@ router.get('/:rid', isAuthenticated, function(req, res, next) {
     if (err) {
       return next(err);
     }
+
+    if (!result) {
+      return res.send({
+        code: 2,
+        result : '해당하는 예약 정보가 없습니다'
+      })
+    }
+
     res.send({
       code: 1,
       result: result

@@ -160,8 +160,16 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     singer.user_id = req.user.id;
     singer.email = req.user.email;
     singer.name = req.user.name;
+    singer.type = req.user.type;
     singer.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(req.user.photoURL);
     singer.simple = parseInt(req.query.simple || 0);
+
+    if (singer.type === 2) {
+        return res.send({
+            code: 2,
+            result: '올바르지 않은 접근입니다. (customer가 singer의 마이페이지를 요청)'
+        });
+    }
 
     Singer.findSingerById(singer.user_id, function(err, result) {
         if (err) return next(err);

@@ -35,7 +35,6 @@ passport.use(new LocalStrategy({usernameField: 'email', passwordField: 'password
         if (!user) {
             return done(null, false);
         }
-        console.log({ user : user});
         // 2. 입력받은 password가 유효한 비밀번호인지 확인
         User.verifyPassword(password, user.password, function(err, result) {
             if (err) {

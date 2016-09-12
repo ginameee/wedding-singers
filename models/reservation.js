@@ -21,7 +21,7 @@ function registerReservation(reservation, callback) {
             if (err) {
                 return callback(err);
             }
-            callback(null, result);
+            callback(null, result.insertId);
         });
     });
 }
@@ -31,7 +31,9 @@ function registerReservation(reservation, callback) {
 function findReservationListOfUser(user, callback) {
     var reservation = {};
     var sql_select_all_reservation = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song  ' +
-                                      'FROM reservation WHERE customer_user_id = ? or singer_user_id = ? AND status != 30';
+                                      'FROM reservation WHERE (customer_user_id = ? or singer_user_id = ?) AND status != 30';
+    // var sql_select_wait_reservation = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song  ' +
+    //                                   'FROM reservation WHERE singer_user_id = ? AND status = 10';
     var sql_select_completed_reservation = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song FROM reservation WHERE (customer_user_id = ? or singer_user_id = ?) AND status = 30';
     var sql_user_info = 'SELECT name, photoURL FROM user WHERE id = ?';
     var sql_select_reservation_by_date = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song  FROM reservation WHERE (customer_user_id = ? OR singer_user_id = ?) AND (year(reservation_dtime) = ? AND month(reservation_dtime) = ?) AND status = 30';
@@ -44,18 +46,23 @@ function findReservationListOfUser(user, callback) {
 
         var sql_select_reservation;
 
-        // 전체목록
+        // 전체목록의 경우
         if (user.tab === 1) {
-            sql_select_reservation = sql_select_all_reservation;
-        } else {
+            // if (user.type === 1) {
+            //     sql_select_reservation = sql_select_wait_reservation;
+            // } else {
+                sql_select_reservation = sql_select_all_reservation;
+            // }
+        } else { // 완료된 예약목록 검색의 경우
             sql_select_reservation = sql_select_completed_reservation;
         }
 
-        // 완료된 예약 목록
+        // 싱어의 일정관리 일 경우
         if (user.month) {
             sql_select_reservation = sql_select_reservation_by_date;
         }
 
+        // 고객의 특정 싱어의 예약현황을 열람하고 싶을 때,
         if (user.date) {
             var reservations = [];
             sql_select_reservation = sql_select_reservation_date;
@@ -104,14 +111,14 @@ function findReservationListOfUser(user, callback) {
             }
 
             item[param1+'_name'] = user.name;
-            item[param1+'_photoURL'] = user.photoURL;
+            item[param1+'_photoURL'] = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(user.photoURL);
 
             dbConn.query(sql_user_info, [item[param2+'_user_id']], function(err, results) {
                 if (err) {
                     return cb(err);
                 }
                 item[param2+'_name'] = results[0].name;
-                item[param2+'_photoURL'] = results[0].photoURL;
+                item[param2+'_photoURL'] = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(results[0].photoURL);
 
                 cb(null, item);
             });
@@ -121,7 +128,7 @@ function findReservationListOfUser(user, callback) {
 
 
 function findReservationById(user, callback) {
-    var sql_select_reservation = 'SELECT r.id id, place, demand, reservation_dtime, write_dtime, payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song, special_price, standard_price ' +
+    var sql_select_reservation = 'SELECT r.id id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d %h:%m\') reservation_dtime, date_format(write_dtime, \'%Y-%m-%d %h:%m\') write_dtime, date_format(payment_dtime, \'%Y-%m-%d %h:%m\')  payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song, special_price, standard_price ' +
                                   'FROM reservation r JOIN singer s ON (r.singer_user_id = s.user_id) ' +
                                   'WHERE id = ?';
     var sql_user_info = 'SELECT name, photoURL FROM user WHERE id = ?';
@@ -140,12 +147,19 @@ function findReservationById(user, callback) {
                 return callback(err);
             }
 
+            if (results.length == 0) {
+                dbConn.release();
+                return callback(null, null);
+            }
+
             reservation.singer_id = results[0].singer_user_id;
             reservation.customer_id = results[0].customer_user_id;
             reservation.place = results[0].place;
             reservation.demand = results[0].demand;
             reservation.song = results[0].song;
             reservation.type = results[0].type;
+            reservation.reservation_dtime = results[0].reservation_dtime;
+
 
             if (user.type === 1) {
                 reservation.singer_name = user.name;
@@ -156,8 +170,9 @@ function findReservationById(user, callback) {
                     if (err) {
                         return callback(err);
                     }
+
                     reservation.customer_name = results[0].name;
-                    reservation.customer_photoURL = results[0].photoURL;
+                    reservation.customer_photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(results[0].photoURL);
                     return callback(null, reservation);
 
                 });
@@ -172,7 +187,7 @@ function findReservationById(user, callback) {
                     }
                     
                     reservation.singer_name = results[0].name;
-                    reservation.singer_photoURL = results[0].photoURL;
+                    reservation.singer_photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(results[0].photoURL);
                     return callback(null, reservation);
                 });
             }
@@ -203,15 +218,26 @@ function updateReservation(param, callback) {
     });
 }
 
-function deleteAfterTime(param, callback) {
-    var sql_delete_reservation = 'DELETE FROM reservation WHERE id = ?';
-    var sql_select_reservation = 'SELECT FROM resrvation WHERE id = ?';
 
-    dbPool.getConnection();
-    callback(null, 'removed!!!');
+function deleteReservation(rid, callback) {
+    var sql_delete_reservation = 'DELETE FROM reservation WHERE id = ?';
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+
+        dbConn.query(sql_delete_reservation, [rid], function(err) {
+            dbConn.release();
+            if (err) {
+                return callback(err);
+            }
+            callback(null, rid + ' Reservation data has removed!!! By CronJob');
+        });
+    });
 }
 module.exports.registerReservation = registerReservation;
 module.exports.findReservationListOfUser = findReservationListOfUser;
 module.exports.findReservationById = findReservationById;
 module.exports.updateReservation = updateReservation;
-module.exports.deleteAfterTime = deleteAfterTime;
+module.exports.deleteReservation = deleteReservation;

@@ -118,7 +118,6 @@ router.delete('/me', isSecure, isAuthenticated, function(req, res, next) {
       return next(err);
     }
 
-    console.log(result);
     if (result.affectedRows > 0) {
       res.send({
         message:'회원탈퇴가 정상적으로 처리되었습니다'
@@ -138,7 +137,6 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
   logger.log('debug', 'content-type: %s', req.headers['content-type']);
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
 
-  console.log('users/me 수행');
   var user = {};
   user.id = req.user.id;
   user.name = req.user.name;
@@ -146,7 +144,7 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
   var filename = path.basename(req.user.photoURL);
   // console.log(req.user.photoURL.split(path.delimiter).split(path.sep));
 
-  user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + filename;
+  user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + filename;
   user.type = req.user.type;
   user.phone = req.user.phone;
 
@@ -154,7 +152,6 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     if (err) {
       return next(err);
     }
-    console.log(result);
     user.point = result;
     // user.photoURL = 'http://localhost:' + process.env.HTTP_PORT + '/images/'  + path.basename(result.photoURL);
     res.send({
@@ -175,15 +172,9 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
   logger.log('debug', 'password: %s', req.body.password);
 
   var user = {};
-  console.log(req.user);
   user.id = req.user.id;
-  // user.password = req.body.password;
-  // user.name = req.body.name;
-  // user.phone = req.body.phone;
-  // user.photoURL = req.body.url;
-
+console.log('포미더블 실행 전');
   var form = new formidable.IncomingForm();
-  //form.uploadDir = path.join(__dirname);
   form.uploadDir = path.join(__dirname, '../uploads/images/profiles');
   form.keepExtensions = true;
   form.parse(req, function(err, fields, files) {
@@ -191,10 +182,17 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
       return next(err);
     }
 
-    user.password = fields.password;
-    if(files.photo) user.file = files.photo.path;
+    user.password = fields.password || 0;
+    if (files.photo){
+      user.file = files.photo.path;
+    }
 
-    User.updateUser(user, function(err, result) {
+
+    console.log(user.password);
+    console.log(user.file);
+
+
+    User.updateUser(user, function(err) {
       if (err) {
         return next(err);
       }
