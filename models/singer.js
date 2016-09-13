@@ -38,7 +38,6 @@ function updateSinger(singer, callback) {
                     callback(null);
                 })
             });
-
         });
 
         function registerSingerInfo(cb) {

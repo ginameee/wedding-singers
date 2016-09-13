@@ -28,6 +28,7 @@ router.get('/me', isAuthenticated, function(req, res, next) {
     });
 });
 
+
 // --------------------------------------------------
 // HTTP GET /videos?theme=3&location=2'&price=0&composition=0&keyword=0: 동영상 검색
 // HTTP GET /videos?sid=2 다른 싱어의 동영상 검색
@@ -85,6 +86,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
         });
     }
 });
+
 
 // --------------------------------------------------
 // HTTP GET /videos/main?type=2: 메인페이지 동영상 목록

@@ -42,7 +42,7 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 // HTTP GET /singers/me/holidaies : Singer 휴일 조회
 // --------------------------------------------------
-router.get('/:sid/holidaies', isAuthenticated, function(req, res, next) {
+router.get('/:sid/holidays', isAuthenticated, function(req, res, next) {
     var userId;
 
      if (req.params.sid == 'me') {
@@ -51,20 +51,15 @@ router.get('/:sid/holidaies', isAuthenticated, function(req, res, next) {
         userId = req.params.sid;
      }
 
-    console.log(userId);
-    var holidays = [];
-
     Singer.findSingerHolidays(userId, function(err, results) {
         if (err) {
             return next(err);
         }
 
-        holidays = results;
-
         res.send({
             code: 1,
             result: {
-                holidays: holidays
+                holidays: results
             }
         });
     });
@@ -74,7 +69,7 @@ router.get('/:sid/holidaies', isAuthenticated, function(req, res, next) {
 // --------------------------------------------------
 // HTTP PUT /singers/me/holidaies : Singer 휴일 변경
 // --------------------------------------------------
-router.put('/me/holidaies', isAuthenticated, function(req, res, next) {
+router.put('/me/holidays', isAuthenticated, function(req, res, next) {
 
     logger.log('debug', 'content-type: %s', req.headers['content-type']);
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);

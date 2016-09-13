@@ -3,8 +3,8 @@ var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var User = require('../models/user');
-var Singer = require('../models/singer');
-var Customer = require('../models/customer');
+// var Singer = require('../models/singer');
+// var Customer = require('../models/customer');
 var async = require('async');
 var formidable = require('formidable');
 var path = require('path');
@@ -203,5 +203,6 @@ console.log('포미더블 실행 전');
     });
   });
 });
+
 
 module.exports = router;

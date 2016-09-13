@@ -16,13 +16,13 @@ router.post('/', isAuthenticated, function(req, res, next) {
 
   var reservation = {};
   reservation.cid = req.user.id;
-  reservation.place = req.body.place;
+  reservation.place = req.body.place || '전국';
   reservation.demand = req.body.demand || '';
   reservation.r_dtime = req.body.reservation_date + " " + req.body.reservation_time + ":00";
   reservation.w_dtime = req.body.write_dtime;
   reservation.sid = req.body.singer_id;
-  reservation.type = req.body.type;
-  reservation.song = req.body.song;
+  reservation.type = req.body.type || 1;
+  reservation.song = req.body.song || ' ';
 
   logger.log('debug', 'content-type: %s', req.headers['content-type']);
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
@@ -85,6 +85,7 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
   logger.log('debug', 'type: %d', req.body.type);
 
   var param = {};
+  param.user_id = req.user.id;
   param.rid = req.params.rid;
   param.type = parseInt(req.body.type);
 
@@ -128,7 +129,7 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
 });
 
 
-// -------------------------------------------------- 
+// --------------------------------------------------
 // HTTP GET /reservations/me : 예약 목록 조회
 // --------------------------------------------------
 router.get('/me', isAuthenticated, function(req, res, next) {
@@ -150,7 +151,7 @@ router.get('/me', isAuthenticated, function(req, res, next) {
   user.year = req.query.year || 0;
   user.month = req.query.month || 0;
   console.log(user.type);
-  // user.date = req.query.date || 0;
+  user.date = req.query.date || 0;
 
   Reservation.findReservationListOfUser(user, function(err, results) {
     if (err) {
@@ -178,6 +179,8 @@ router.get('/', isAuthenticated, function(req, res, next) {
   user.date = 1;
   user.id = req.query.sid;
 
+
+
   Reservation.findReservationListOfUser(user, function(err, results) {
     if (err) {
       return next(err);
@@ -185,7 +188,9 @@ router.get('/', isAuthenticated, function(req, res, next) {
 
     res.send({
       code: 1,
-      result: results
+      result: {
+        reservations: results
+      }
     })
   })
 });

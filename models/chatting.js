@@ -5,24 +5,24 @@ var dbPool = require('../models/common').dbPool;
 var async = require('async');
 
 /* 레지스트레이션 토큰 가져오기 */
-function selectRegistrationToken(param, callback) {
-    var sql_selectRegistrationToken =
-        'select registration_token ' +
-        'from user ' +
-        'where id = ?';
-
-    dbPool.getConnection(function(err, dbConn) {
-        if (err) {
-            return callback(err);
-        }
-        dbConn.query(sql_selectRegistrationToken, [param.receiver], function(err, results) {
-            if (err) {
-                return callback(err);
-            }
-            callback(null, results[0]);
-        })
-    });
-}
+// function selectRegistrationToken(param, callback) {
+//     var sql_selectRegistrationToken =
+//         'select registration_token ' +
+//         'from user ' +
+//         'where id = ?';
+//
+//     dbPool.getConnection(function(err, dbConn) {
+//         if (err) {
+//             return callback(err);
+//         }
+//         dbConn.query(sql_selectRegistrationToken, [param.receiver], function(err, results) {
+//             if (err) {
+//                 return callback(err);
+//             }
+//             callback(null, results[0]);
+//         })
+//     });
+// }
 
 /* 채팅 메시지 저장 */
 function insertChattingLog(param, callback) {
@@ -93,6 +93,6 @@ function getChattingLog(data, callback) {
     });
 }
 
-module.exports.selectRegistarionToken = selectRegistrationToken;
+// module.exports.selectRegistarionToken = selectRegistrationToken;
 module.exports.insertChattingLog = insertChattingLog;
 module.exports.getChattingLog = getChattingLog;

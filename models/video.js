@@ -344,6 +344,7 @@ function listVideo(type, callback) {
     });
 }
 
+
 // HTTP DELETE /videos/:vid 에서 호출할 동영상을 지우는 함수
 function deleteVideo(vids, callback) {
     var sql_delete_video = 'DELETE FROM video WHERE id = ?';

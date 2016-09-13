@@ -168,6 +168,7 @@ function findOrCreate(profile, callback) {
                         user.name = results[0].name;
                         user.email = results[0].email;
                         user.phone = results[0].phone;
+                        user.type = results[0].type;
                         return callback(null, user);
                     });
                 }

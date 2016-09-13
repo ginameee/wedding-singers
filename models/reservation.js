@@ -198,23 +198,62 @@ function findReservationById(user, callback) {
 
 function updateReservation(param, callback) {
 
-    var sql_update_resevation = 'UPDATE reservation ' +
-                                 'SET status = ? ' +
-                                 'WHERE id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err)
         }
 
-        dbConn.query(sql_update_resevation, [param.type, param.rid], function(err) {
-            dbConn.release();
+        var task = [];
+        task.push(updateReservation);
+        if (param.type === 31) {
+            task.push(updatePenalty);
+        }
+        console.log(task);
+
+        dbConn.beginTransaction(function(err) {
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
-
-            callback(null);
+            async.series(task, function(err) {
+                if (err) {
+                    return dbConn.rollback(function () {
+                        dbConn.release();
+                        callback(err);
+                    });
+                }
+                dbConn.commit(function() {
+                    dbConn.release();
+                    callback(null);
+                });
+            })
         });
+
+        function updateReservation(cb) {
+            var sql_update_resevation = 'UPDATE reservation ' +
+                                         'SET status = ? ' +
+                                         'WHERE id = ?';
+            dbConn.query(sql_update_resevation, [param.type, param.rid], function(err) {
+                if (err) {
+                    return cb(err);
+                }
+                cb(null);
+            });
+        }
+
+        function updatePenalty(cb) {
+            var sql_update_penalty = 'UPDATE singer ' +
+                                     'SET penalty = penalty + 100 ' +
+                                     'WHERE user_id = ?';
+
+            dbConn.query(sql_update_penalty, [param.user_id], function(err) {
+                if (err) {
+                    return cb(err);
+                }
+                cb(null);
+            });
+        }
     });
 }
 
