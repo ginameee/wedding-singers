@@ -187,6 +187,7 @@ router.get('/:vid', function(req, res, next) {
     var input = {};
     input.vid = parseInt(req.params.vid);
     input.uid = parseInt(req.user.id || 0);
+    input.type = parseInt(req.user.type);
 
     Video.findVideoById(input, function(err, result) {
         res.send({

@@ -63,9 +63,13 @@ function findVideoById(input, callback) {
     video.favorite_check = 0;
 
 
-    async.parallel([checkFavorite, selectVideo], function(err) {
+    async.parallel([checkFavorite, selectVideo], function(err, result) {
         if (err) {
             return callback(err);
+        }
+
+        if (result === 1) {
+            callback(null, null);
         }
         callback(null, video);
     });
@@ -98,6 +102,10 @@ function findVideoById(input, callback) {
                 if (err) {
                     return cb(err);
                 }
+
+                if (results.length === 0) {
+                    return cb(null, 1);
+                }
                 video.id = results[0].id;
                 video.url = results[0].url;
                 video.hit = results[0].hit;
@@ -105,6 +113,7 @@ function findVideoById(input, callback) {
                 video.favorite_cnt = results[0].favorite_cnt;
                 video.title = results[0].title;
                 video.singer_id = results[0].singer_user_id;
+                video.user_type = input.type;
                 cb(null);
             });
         })
