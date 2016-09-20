@@ -10,7 +10,7 @@ var logger = require('../common/logger');
 // --------------------------------------------------
 // HTTP GET /reviews?sid : 리뷰 목록 조회
 // --------------------------------------------------
-router.get('/', isAuthenticated, function(req, res, next){
+router.get('/', function(req, res, next){
 
   logger.log('debug', 'content-type: %s', req.headers['content-type']);
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);

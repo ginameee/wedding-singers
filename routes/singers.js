@@ -29,7 +29,7 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
     logger.log('debug', 'rid: %d', req.params.rid);
     logger.log('debug', 'param: %s', singer);
 
-    Singer.updateSinger(singer, function(err, result) {
+    Singer.updateSinger(singer, function(err) {
         if (err) return next(err);
         res.send({
             code: 1,
@@ -150,8 +150,6 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
 
     var singer = {};
-    console.log('유저객체보기');
-    console.log(req.user);
     singer.user_id = req.user.id;
     singer.email = req.user.email;
     singer.name = req.user.name;

@@ -27,11 +27,11 @@ function selectRegistrationToken(param, callback) {
 
 // param에 필요한 정보
 // param_sender_id = req.user.id
-// param_sender_registration_token = req.user.registration_token
+// param_sender_registration_token = req.user.registration_token -- 필요없음
 // param.receiver_id = 해당 게시물에 대한 singer or customer id
 // param.message = type에 따라 내가 만들어 줘야 하는 message
 // param.data_pk = 해당 게시물에 대한 id
-// paraa.type = 게시물에 대한 type
+// param.type = 게시물에 대한 type
 function notify(input, callback) {
     var sql_insert_notification = 'INSERT INTO notification(sender_id, receiver_id, message, data_pk, type) ' +
                                    'VALUES (?, ?, ?, ?, ?)';
@@ -43,7 +43,7 @@ function notify(input, callback) {
             return callback(err);
         }
 
-        selectRegistrationToken(param.receiver, function(err, result) {
+        selectRegistrationToken(param.receiver_id, function(err, result) {
             if (err) {
                 return callback(err);
             }
@@ -58,7 +58,7 @@ function notify(input, callback) {
 
             var msg = fcm.Message({
                 data: {
-                    key1: value
+                    key1: 1
                 },
                 notification: {
                     title: 'Wedding Singers',

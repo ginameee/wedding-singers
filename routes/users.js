@@ -130,7 +130,7 @@ router.delete('/me', isSecure, isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
-// HTTPS GET /users/me : 마이페이지 조회 첫번째 화면
+// HTTPS GET /users/me?type=1 : 마이페이지 조회 첫번째 화면
 // --------------------------------------------------
 router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
 
@@ -147,6 +147,17 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
   user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + filename;
   user.type = req.user.type;
   user.phone = req.user.phone;
+  user.login_type = 1;
+  if (req.user.facebook_id) {
+    user.login_type = 2;
+  }
+
+  if (req.query.type) {
+    return res.send ({
+      code: 1,
+      result: { type: user.type }
+    });
+  }
 
   User.findUserById(user, function(err, result) {
     if (err) {

@@ -35,7 +35,7 @@ function findReservationListOfUser(user, callback) {
     // var sql_select_wait_reservation = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song  ' +
     //                                   'FROM reservation WHERE singer_user_id = ? AND status = 10';
     var sql_select_completed_reservation = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song FROM reservation WHERE (customer_user_id = ? or singer_user_id = ?) AND status = 30';
-    var sql_user_info = 'SELECT name, photoURL FROM user WHERE id = ?';
+    var sql_user_info = 'SELECT id, name, photoURL FROM user WHERE id = ?';
     var sql_select_reservation_by_date = 'SELECT id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d\') reservation_dtime, date_format(payment_dtime, \'%Y-%m-%d\') payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song  FROM reservation WHERE (customer_user_id = ? OR singer_user_id = ?) AND (year(reservation_dtime) = ? AND month(reservation_dtime) = ?) AND status = 30';
     var sql_select_reservation_date = 'SELECT date_format(reservation_dtime, \'%Y-%m-%d\') reservations FROM reservation WHERE singer_user_id = ?';
 
@@ -110,15 +110,17 @@ function findReservationListOfUser(user, callback) {
                 param2 = 'customer';
             }
 
-            item[param1+'_name'] = user.name;
-            item[param1+'_photoURL'] = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(user.photoURL);
+            item[param1 + '_id'] = user.id;
+            item[param1 + '_name'] = user.name;
+            item[param1 + '_photoURL'] = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(user.photoURL);
 
             dbConn.query(sql_user_info, [item[param2+'_user_id']], function(err, results) {
                 if (err) {
                     return cb(err);
                 }
-                item[param2+'_name'] = results[0].name;
-                item[param2+'_photoURL'] = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(results[0].photoURL);
+                item[param2 + '_id'] = results[0].id;
+                item[param2 + '_name'] = results[0].name;
+                item[param2 + '_photoURL'] = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(results[0].photoURL);
 
                 cb(null, item);
             });

@@ -62,12 +62,20 @@ function findVideoById(input, callback) {
     var video = {};
     video.favorite_check = 0;
 
+    var tasks = [];
+
+    if (input.type == 2) {
+        tasks.push(checkFavorite);
+    }
+    tasks.push(selectVideo);
+
 
     async.parallel([checkFavorite, selectVideo], function(err, result) {
         if (err) {
             return callback(err);
         }
 
+        // 해당 video 가 없을 때
         if (result === 1) {
             callback(null, null);
         }
@@ -75,6 +83,7 @@ function findVideoById(input, callback) {
     });
 
     function checkFavorite(cb) {
+        console.log('checkFavorite 수행');
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
                 return cb(err);
@@ -93,6 +102,7 @@ function findVideoById(input, callback) {
         });
     }
     function selectVideo(cb) {
+        console.log('selectVideo 수행');
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
                 return cb(err);

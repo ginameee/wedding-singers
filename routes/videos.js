@@ -33,7 +33,7 @@ router.get('/me', isAuthenticated, function(req, res, next) {
 // HTTP GET /videos?theme=3&location=2'&price=0&composition=0&keyword=0: 동영상 검색
 // HTTP GET /videos?sid=2 다른 싱어의 동영상 검색
 // --------------------------------------------------
-router.get('/', isAuthenticated, function(req, res, next) {
+router.get('/', function(req, res, next) {
 
     if (req.query.sid) {
         logger.log('debug', 'content-type: %s', req.headers['content-type']);
@@ -186,8 +186,12 @@ router.get('/:vid', function(req, res, next) {
 
     var input = {};
     input.vid = parseInt(req.params.vid);
-    input.uid = parseInt(req.user.id || 0);
-    input.type = parseInt(req.user.type);
+    input.uid = 0;
+    input.type = 0;
+    if (req.user){
+        input.uid = req.user.id;
+        input.type = req.user.type;
+    }
 
     Video.findVideoById(input, function(err, result) {
         res.send({

@@ -26,7 +26,8 @@ function findUser(id, callback) {
                 phone : results[0].phone,
                 type : parseInt(results[0].type),
                 photoURL : results[0].photoURL,
-                registration_token : results[0].registration_token
+                registration_token : results[0].registration_token,
+                facebook_id : results[0].facebook_id || ''
             };
             callback (null, user);
         });
@@ -123,11 +124,18 @@ function verifyPassword(password, db_password, callback) {
 // POST auth/facebook/token 에서 사용되는 함수
 function findOrCreate(profile, callback) {
     var user = {};
+    console.log(profile);
     user.facebookId = profile.id;
+    user.name = profile.displayName;
+    user.photoURL = profile.photos[0].value || '';
+
+    console.log('---------------------입력받은 매개변수 -----------------------------');
     console.log(user.facebookId);
+    console.log(user.name);
+    console.log(user.photoURL);
 
     var sql_select_user = 'SELECT * FROM user WHERE facebook_id = ?';
-    var sql_insert_user = 'INSERT INTO user(facebook_id) VALUES (?)';
+    var sql_insert_user = 'INSERT INTO user(facebook_id, name, photoURL) VALUES (?, ?, ?)';
 
     dbPool.getConnection(function(err, dbConn) {
        if (err) {
@@ -138,7 +146,9 @@ function findOrCreate(profile, callback) {
            if (err) {
                return callback(err);
            }
+            console.log('-------------------트랜잭션 시작----------------------');
             dbConn.query(sql_select_user, [user.facebookId], function(err, results) {
+                console.log('-------------------sql_select_user 수행 ----------------------');
                 if (err) {
                     return dbConn.rollback(function () {
                         dbConn.release();
@@ -147,7 +157,8 @@ function findOrCreate(profile, callback) {
                 }
 
                 if(results.length === 0) {
-                    dbConn.query(sql_insert_user, [user.facebookId], function(err, result) {
+                    console.log('-------------------results의 길이가 0 ----------------------');
+                    dbConn.query(sql_insert_user, [user.facebookId, user.name, user.photoURL], function(err, result) {
                         dbConn.release();
                         if (err) {
                             return dbConn.rollback(function() {
@@ -162,6 +173,7 @@ function findOrCreate(profile, callback) {
                 }
 
                 else {
+                    console.log('-------------------results의 길이가 1----------------------');
                     dbConn.commit(function() {
                         dbConn.release();
                         user.id = results[0].id;
@@ -368,6 +380,10 @@ function updateUser(user, callback) {
                           'SET photoURL = ? WHERE id = ?';
     var sql_update_password = 'UPDATE user ' +
                               'SET password = sha2(?, 512) WHERE id = ?';
+    var sql_update_registration_token = 'UPDATE user ' +
+                                        'SET registration_token = ? ' +
+                                        'WHERE id = ?';
+
     var sql_select_filepath = 'SELECT photoURL FROM user WHERE id = ?';
 
     var params = [user.password, user.file, user.id];
@@ -380,6 +396,11 @@ function updateUser(user, callback) {
     if (!user.file) {
         sql_update_user = sql_update_password;
         params = [user.password, user.id];
+    }
+
+    if (user.registration_update) {
+        sql_update_user = sql_update_registration_token;
+        params = [user.registration_token, user.id];
     }
 
     dbPool.getConnection(function(err, dbConn) {

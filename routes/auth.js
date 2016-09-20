@@ -9,6 +9,7 @@ var FacebookTokenStrategy = require('passport-facebook-token');
 var isSecure = require('./common').isSecure;
 var User = require('../models/user.js');
 var isAuthenticated = require('./common').isAuthenticated;
+var path = require('path');
 
 // 로깅용 모듈
 var logger = require('../common/logger');
@@ -85,10 +86,32 @@ router.post('/local/login', isSecure, passport.authenticate('local'), function(r
     user.email = req.user.email;
     user.name = req.user.name;
     user.type = req.user.type;
+    user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(req.user.photoURL);
+    user.registration_token = req.body.registration_token;
 
-    res.send({
-        code: 1,
-        result: user
+    User.findUser(user.id, function(err, result) {
+        if (err) {
+            return next(err);
+        }
+
+        if (result.registration_token == req.body.registration_token) {
+            res.send({
+                code: 1,
+                result: user
+            });
+        } else {
+            user.registration_update = 1;
+            User.updateUser(user, function(err) {
+                if (err) {
+                    return next(err);
+                }
+                delete user.registration_update;
+                res.send({
+                    code: 1,
+                    result: user
+                })
+            })
+        }
     });
 });
 
@@ -104,27 +127,57 @@ router.post('/facebook/token', isSecure, passport.authenticate('facebook-token')
 
     if (!req.user) {
         res.send('로그인실패!');
-    }
-    else {
+    } else {
         var user = {};
         user.id = req.user.id;
-        user.type = req.user.type || '최초 로그인(회원가입) 입니다';
+        user.type = req.user.type || 0;
         user.email = req.user.email || '최초 로그인(회원가입) 입니다';
         user.name = req.user.name || '최초 로그인(회원가입) 입니다';
+        user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(req.user.photoURL);
+        user.registration_token = req.body.registration_token;
 
-        if (!req.user.email) {
-            user.flag = 0;
-            res.send({
-                code: 3,
-                result: user
-            });
-        } else {
-            user.flag = 1;
-            res.send({
-                code: 1,
-                result: user
-            });
-        }
+        User.findUser(user.id, function(err, result) {
+            if (err) {
+                return next(err);
+            }
+
+            if (result.registration_token == req.body.registration_token) {
+                if (!req.user.email) {
+                    user.flag = 0;
+                    res.send({
+                        code: 3,
+                        result: user
+                    });
+                } else {
+                    user.flag = 1;
+                    res.send({
+                        code: 1,
+                        result: user
+                    });
+                }
+            } else {
+                user.registration_update = 1;
+                User.updateUser(user, function(err) {
+                    if (err) {
+                        return next(err);
+                    }
+                    delete user.registration_update;
+                    if (!req.user.email) {
+                        user.flag = 0;
+                        res.send({
+                            code: 3,
+                            result: user
+                        });
+                    } else {
+                        user.flag = 1;
+                        res.send({
+                            code: 1,
+                            result: user
+                        });
+                    }
+                })
+            }
+        });
     }
 });
 
