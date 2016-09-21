@@ -14,6 +14,7 @@
     "debug": "~2.2.0",
     "express": "~4.13.4",
     "express-session": "^1.14.0",
+    "fcm": "^1.0.3",
     "formidable": "^1.0.17",
     "fs": "0.0.1-security",
     "https": "^1.0.0",

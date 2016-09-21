@@ -109,8 +109,8 @@ router.post('/local/login', isSecure, passport.authenticate('local'), function(r
                 res.send({
                     code: 1,
                     result: user
-                })
-            })
+                });
+            });
         }
     });
 });
@@ -135,6 +135,8 @@ router.post('/facebook/token', isSecure, passport.authenticate('facebook-token')
         user.name = req.user.name || '최초 로그인(회원가입) 입니다';
         user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com' + '\/images\/'  + path.basename(req.user.photoURL);
         user.registration_token = req.body.registration_token;
+        console.log('-----------------입력받은 reg token --------------------');
+        console.log(user.registration_token);
 
         User.findUser(user.id, function(err, result) {
             if (err) {
@@ -189,8 +191,8 @@ router.get('/logout', isSecure, isAuthenticated, function(req, res, next) {
     logger.log('debug', 'content-type: %s', req.headers['content-type']);
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
 
-
     req.logout();
+
     res.send({
         code: 1,
         result: "성공"

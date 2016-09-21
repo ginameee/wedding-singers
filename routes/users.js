@@ -130,7 +130,7 @@ router.delete('/me', isSecure, isAuthenticated, function(req, res, next) {
 
 
 // --------------------------------------------------
-// HTTPS GET /users/me?type=1 : 마이페이지 조회 첫번째 화면
+// HTTPS GET /users/me : 마이페이지 조회 첫번째 화면
 // --------------------------------------------------
 router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
 
@@ -141,9 +141,8 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
   user.id = req.user.id;
   user.name = req.user.name;
   user.email = req.user.email;
-  var filename = path.basename(req.user.photoURL);
-  // console.log(req.user.photoURL.split(path.delimiter).split(path.sep));
 
+  var filename = path.basename(req.user.photoURL);
   user.photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com:' + process.env.HTTP_PORT + '/images/'  + filename;
   user.type = req.user.type;
   user.phone = req.user.phone;
@@ -152,19 +151,11 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     user.login_type = 2;
   }
 
-  if (req.query.type) {
-    return res.send ({
-      code: 1,
-      result: { type: user.type }
-    });
-  }
-
   User.findUserById(user, function(err, result) {
     if (err) {
       return next(err);
     }
     user.point = result;
-    // user.photoURL = 'http://localhost:' + process.env.HTTP_PORT + '/images/'  + path.basename(result.photoURL);
     res.send({
       code: 1,
       result: user
@@ -184,7 +175,7 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
 
   var user = {};
   user.id = req.user.id;
-console.log('포미더블 실행 전');
+
   var form = new formidable.IncomingForm();
   form.uploadDir = path.join(__dirname, '../uploads/images/profiles');
   form.keepExtensions = true;
@@ -192,17 +183,10 @@ console.log('포미더블 실행 전');
     if (err) {
       return next(err);
     }
-
     user.password = fields.password || 0;
     if (files.photo){
       user.file = files.photo.path;
     }
-
-
-    console.log(user.password);
-    console.log(user.file);
-
-
     User.updateUser(user, function(err) {
       if (err) {
         return next(err);
@@ -215,5 +199,17 @@ console.log('포미더블 실행 전');
   });
 });
 
-
+// --------------------------------------------------
+// HTTP get /users/type : 유저 정보 수정
+// --------------------------------------------------
+router.get('/type', function(req, res, next) {
+  var type = 0;
+  if (req.user) {
+    type = req.user.type;
+  }
+  res.send({
+    code: 1,
+    result: type
+  });
+});
 module.exports = router;

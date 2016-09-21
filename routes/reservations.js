@@ -5,6 +5,7 @@ var isSecure = require('./common').isSecure;
 var Reservation = require('../models/reservation');
 var CronJob = require('cron').CronJob;
 var moment = require('moment-timezone');
+var Notification = require('../models/notification');
 
 // 로깅용 모듈
 var logger = require('../common/logger');
@@ -24,6 +25,13 @@ router.post('/', isAuthenticated, function(req, res, next) {
   reservation.type = req.body.type || 1;
   reservation.song = req.body.song || ' ';
 
+  var noti_param = {};
+  noti_param.sender_id = req.user.id;
+  noti_param.sender_name = req.user.name;
+  noti_param.data_pk = 0;
+  noti_param.type = 10;
+  noti_param.receiver_id = req.body.singer_id;
+
   logger.log('debug', 'content-type: %s', req.headers['content-type']);
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
   logger.log('debug', 'input: %j', reservation, {});
@@ -39,37 +47,49 @@ router.post('/', isAuthenticated, function(req, res, next) {
     if (err) {
       return next(err);
     }
-    res.send({
-      code: 1,
-      result: '성공'
-    });
 
-    var param = {};
-    param.rid = result;
-    param.type = 11;
-
-    var timeZone = "Asia/Seoul";
-    var day = 2;
-    var future = moment().tz(timeZone).add(day, 's');
-    var crontime = future.second() + " " +
-        future.minute() + " " +
-        future.hour() + " " +
-        future.date() + " " +
-        future.month() + " ";
-    // crontime = '05 * * * * *';
-
-    var job = new CronJob(crontime, function () {
-      logger.log('debug', 'CronJob Started');
-      Reservation.updateReservation(param, function (err) {
+      Notification.notify(noti_param, function(err, result) {
         if (err) {
-          logger.log('debug', err);
+          return next(err);
         }
-        logger.log('debug', 'Reservation data has changed!!! By CronJob');
+        res.send({
+          code: 1,
+          result: result
+        });
       });
-      job.stop();
-    }, function () {
-      logger.log('debug', 'CronJob Completed');
-    }, true, timeZone);
+    //
+    //
+    // res.send({
+    //   code: 1,
+    //   result: '성공'
+    // });
+
+      var param = {};
+      param.rid = result;
+      param.type = 11;
+
+      var timeZone = "Asia/Seoul";
+      var day = 2;
+      var future = moment().tz(timeZone).add(day, 's');
+      var crontime = future.second() + " " +
+          future.minute() + " " +
+          future.hour() + " " +
+          future.date() + " " +
+          future.month() + " ";
+      // crontime = '05 * * * * *';
+
+      var job = new CronJob(crontime, function () {
+        logger.log('debug', 'CronJob Started');
+        Reservation.updateReservation(param, function (err) {
+          if (err) {
+            logger.log('debug', err);
+          }
+          logger.log('debug', 'Reservation data has changed!!! By CronJob');
+        });
+        job.stop();
+      }, function () {
+        logger.log('debug', 'CronJob Completed');
+      }, true, timeZone);
   });
 });
 
@@ -89,6 +109,12 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
   param.rid = req.params.rid;
   param.type = parseInt(req.body.type);
 
+  var noti_param = {};
+  noti_param.sender_id = req.user.id;
+  noti_param.data_pk = param.rid;
+  noti_param.type = param.type;
+  noti_param.receiver_id = req.body.sid;
+
   console.log(param.type);
 
   Reservation.updateReservation(param, function(err) {
@@ -104,7 +130,7 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
     if ((param.type % 2 )== 1) {
       var timeZone = "Asia/Seoul";
       var day = 1;
-      var future = moment().tz(timeZone).add(day, 's');
+      var future = moment().tz(timeZone).add(day, 'd');
       var crontime = future.second() + " " +
           future.minute() + " " +
           future.hour() + " " +
@@ -217,7 +243,7 @@ router.get('/:rid', isAuthenticated, function(req, res, next) {
       return res.send({
         code: 2,
         result : '해당하는 예약 정보가 없습니다'
-      })
+      });
     }
 
     res.send({

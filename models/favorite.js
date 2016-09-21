@@ -31,7 +31,6 @@ function insertFavorite(favorite, callback) {
                     dbConn.release();
                 });
             });
-
         });
 
         function insertFavoriteInfo(cb) {
@@ -80,7 +79,7 @@ function deleteFavorite(info, callback) {
 
 //GET /favorites에서 호출할 찜 조회 함수
 function findFavoriteByUser(info, callback) {
-    var sql_select_favorite = 'SELECT v.id id, u.name singer_name, u.id singer_id, title, hit, favorite_cnt, url, v.write_dtime write_dtime ' +
+    var sql_select_favorite = 'SELECT v.id id, u.name singer_name, u.id singer_id, title, hit, favorite_cnt, url, date_format(v.write_dtime, \'%Y-%m-%d %T\') write_dtime ' +
                               'FROM favorite f JOIN video v ON (f.video_id = v.id) ' +
                                               'JOIN user u ON (v.singer_user_id = u.id) ' +
                               'WHERE f.customer_user_id = ?';

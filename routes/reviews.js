@@ -83,6 +83,12 @@ router.post('/', isAuthenticated, function(req, res, next) {
   review.content = req.body.content;
   review.write_dtime = req.body.write_dtime;
 
+  var noti_param = {};
+  noti_param.sender_id = req.user.id;
+  noti_param.data_pk = 0;
+  noti_param.type = 60;
+  noti_param.receiver_id = req.body.sid;
+
   logger.log('debug', 'content-type: %s', req.headers['content-type']);
   logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
   logger.log('debug', 'input: %j', review, {});

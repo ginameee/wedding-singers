@@ -70,7 +70,7 @@ function findVideoById(input, callback) {
     tasks.push(selectVideo);
 
 
-    async.parallel([checkFavorite, selectVideo], function(err, result) {
+    async.parallel(tasks, function(err, result) {
         if (err) {
             return callback(err);
         }
@@ -101,6 +101,7 @@ function findVideoById(input, callback) {
             });
         });
     }
+
     function selectVideo(cb) {
         console.log('selectVideo 수행');
         dbPool.getConnection(function(err, dbConn) {

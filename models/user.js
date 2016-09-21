@@ -39,36 +39,50 @@ function findUserById(user, callback) {
 
     var sql_select_singer = 'SELECT * FROM singer WHERE user_id = ?';
     var sql_select_customer = 'SELECT * FROM customer WHERE user_id = ?';
+    var sql_select_query;
     
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
         if(user.type == 1) {
-            dbConn.query(sql_select_singer, [user.id], function(err, results) {
-                dbConn.release();
-                if (err) {
-                    return callback(err);
-                }
-
-                if (results.length === 0) {
-                    return callback(null, null);
-                }
-                callback(null, results[0].penalty)
-            });
+            sql_select_query = sql_select_singer;
+            // dbConn.query(sql_select_singer, [user.id], function(err, results) {
+            //     dbConn.release();
+            //     if (err) {
+            //         return callback(err);
+            //     }
+            //
+            //     if (results.length === 0) {
+            //         return callback(null, null);
+            //     }
+            //     callback(null, results[0].penalty)
+            // });
         } else {
-            dbConn.query(sql_select_customer, [user.id], function(err, results) {
-                dbConn.release();
-                if (err) {
-                    return callback(err);
-                }
-
-                if (results.length === 0) {
-                    return callback(null, null);
-                }
-                callback(null, results[0].point);
-            });
+            sql_select_query = sql_select_customer;
+            // dbConn.query(sql_select_customer, [user.id], function(err, results) {
+            //     dbConn.release();
+            //     if (err) {
+            //         return callback(err);
+            //     }
+            //
+            //     if (results.length === 0) {
+            //         return callback(null, null);
+            //     }
+            //     callback(null, results[0].point);
+            // });
         }
+        dbConn.query(sql_select_query, [user.id], function(err, results) {
+            dbConn.release();
+            if (err) {
+                return callback(err);
+            }
+
+            if (results.length === 0) {
+                return callback(null, null);
+            }
+            callback(null, results[0].point);
+        });
     });
 }
 
@@ -102,6 +116,7 @@ function findUserByEmail(email, callback) {
 
 function verifyPassword(password, db_password, callback) {
     var sql = 'SELECT sha2(?, 512) password';
+
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -129,11 +144,6 @@ function findOrCreate(profile, callback) {
     user.name = profile.displayName;
     user.photoURL = profile.photos[0].value || '';
 
-    console.log('---------------------입력받은 매개변수 -----------------------------');
-    console.log(user.facebookId);
-    console.log(user.name);
-    console.log(user.photoURL);
-
     var sql_select_user = 'SELECT * FROM user WHERE facebook_id = ?';
     var sql_insert_user = 'INSERT INTO user(facebook_id, name, photoURL) VALUES (?, ?, ?)';
 
@@ -146,9 +156,7 @@ function findOrCreate(profile, callback) {
            if (err) {
                return callback(err);
            }
-            console.log('-------------------트랜잭션 시작----------------------');
             dbConn.query(sql_select_user, [user.facebookId], function(err, results) {
-                console.log('-------------------sql_select_user 수행 ----------------------');
                 if (err) {
                     return dbConn.rollback(function () {
                         dbConn.release();
@@ -157,7 +165,6 @@ function findOrCreate(profile, callback) {
                 }
 
                 if(results.length === 0) {
-                    console.log('-------------------results의 길이가 0 ----------------------');
                     dbConn.query(sql_insert_user, [user.facebookId, user.name, user.photoURL], function(err, result) {
                         dbConn.release();
                         if (err) {
@@ -173,7 +180,6 @@ function findOrCreate(profile, callback) {
                 }
 
                 else {
-                    console.log('-------------------results의 길이가 1----------------------');
                     dbConn.commit(function() {
                         dbConn.release();
                         user.id = results[0].id;
@@ -278,7 +284,8 @@ function registerUserFB(user, callback) {
                           'WHERE id = ?';
     var sql_insert_singer = 'INSERT INTO singer(user_id) VALUES (?)';
     var sql_insert_customer= 'INSERT INTO customer(user_id) VALUES (?)';
-
+    var task = [];
+    task.push(updateUserInfo);
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -292,32 +299,47 @@ function registerUserFB(user, callback) {
             }
 
             if (user.type === 1) {
-                async.series([updateUserInfo, registerSinger], function(err) {
-                    if (err) {
-                        return dbConn.rollback(function () {
-                            dbConn.release();
-                            callback(err);
-                        });
-                    }
-                    dbConn.commit(function () {
-                        dbConn.release();
-                        callback(null);
-                    })
-                });
+                task.push(registerSinger);
+                // async.series([updateUserInfo, registerSinger], function(err) {
+                //     if (err) {
+                //         return dbConn.rollback(function () {
+                //             dbConn.release();
+                //             callback(err);
+                //         });
+                //     }
+                //     dbConn.commit(function () {
+                //         dbConn.release();
+                //         callback(null);
+                //     })
+                // });
             } else {
-                async.series([updateUserInfo, registerCustomer], function(err) {
-                    if (err) {
-                        return dbConn.rollback(function () {
-                            dbConn.release();
-                            callback(err);
-                        });
-                    }
-                    dbConn.commit(function () {
-                        dbConn.release();
-                        callback(null);
-                    })
-                });
+                task.push(registerCustomer);
+                // async.series([updateUserInfo, registerCustomer], function(err) {
+                //     if (err) {
+                //         return dbConn.rollback(function () {
+                //             dbConn.release();
+                //             callback(err);
+                //         });
+                //     }
+                //     dbConn.commit(function () {
+                //         dbConn.release();
+                //         callback(null);
+                //     })
+                // });
             }
+
+            async.series(task, function(err) {
+                if (err) {
+                    return dbConn.rollback(function () {
+                        dbConn.release();
+                        callback(err);
+                    });
+                }
+                dbConn.commit(function () {
+                    dbConn.release();
+                    callback(null);
+                })
+            });
         });
 
         function updateUserInfo(cb) {

@@ -3,6 +3,7 @@ var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var Favorite = require('../models/favorite');
+var Notification = require('../models/notification');
 
 // 로깅용 모듈
 var logger = require('../common/logger');
@@ -10,7 +11,7 @@ var logger = require('../common/logger');
 
 
 // --------------------------------------------------
-// HTTP GET /favorites : 찜 목록 조회
+// HTTP GET /favorites/me : 찜 목록 조회
 // --------------------------------------------------
 router.get('/me', isAuthenticated, function(req, res, next) {
   logger.log('debug', 'content-type: %s', req.headers['content-type']);
@@ -42,6 +43,13 @@ router.post('/', isAuthenticated, function(req, res, next) {
   favorite.uid = req.user.id;
   favorite.vid = req.body.vid;
 
+  var noti_param = {};
+  noti_param.sender_id = req.user.id;
+  noti_param.data_pk = req.body.vid;
+  noti_param.type = 50;
+  noti_param.receiver_id = req.body.sid;
+
+
   logger.log('debug', 'uid: %s', req.user.uid);
   logger.log('debug', 'vid: %s', req.body.vid);
 
@@ -72,6 +80,7 @@ router.delete('/', isAuthenticated, function(req, res, next) {
   info.uid = req.user.id;
   info.vid = req.body.vid;
 
+  
   Favorite.deleteFavorite(info, function(err) {
     if (err) {
       return next(err);
@@ -81,7 +90,6 @@ router.delete('/', isAuthenticated, function(req, res, next) {
       result: '성공'
     });
   });
-
 });
 
 
