@@ -130,7 +130,8 @@ function findReservationListOfUser(user, callback) {
 
 
 function findReservationById(user, callback) {
-    var sql_select_reservation = 'SELECT r.id id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d %h:%m\') reservation_dtime, date_format(write_dtime, \'%Y-%m-%d %h:%m\') write_dtime, date_format(payment_dtime, \'%Y-%m-%d %h:%m\')  payment_dtime, payment_method, status, singer_user_id, customer_user_id, type, song, special_price, standard_price ' +
+    console.log('------------------findReservation');
+    var sql_select_reservation = 'SELECT r.id id, place, demand, date_format(reservation_dtime, \'%Y-%m-%d %h:%m\') reservation_dtime, date_format(write_dtime, \'%Y-%m-%d %h:%m\') write_dtime, date_format(payment_dtime, \'%Y-%m-%d %h:%m\')  payment_dtime, payment_method, status, singer_user_id singer_id, customer_user_id customer_id, type, song, special_price, standard_price ' +
                                   'FROM reservation r JOIN singer s ON (r.singer_user_id = s.user_id) ' +
                                   'WHERE id = ?';
     var sql_user_info = 'SELECT name, photoURL FROM user WHERE id = ?';
@@ -143,7 +144,6 @@ function findReservationById(user, callback) {
         }
 
         dbConn.query(sql_select_reservation, [user.reservation_id], function(err, results) {
-
             if (err) {
                 dbConn.release();
                 return callback(err);
@@ -153,9 +153,8 @@ function findReservationById(user, callback) {
                 dbConn.release();
                 return callback(null, null);
             }
-
-            reservation.singer_id = results[0].singer_user_id;
-            reservation.customer_id = results[0].customer_user_id;
+            reservation.singer_id = results[0].singer_id;
+            reservation.customer_id = results[0].customer_id;
             reservation.place = results[0].place;
             reservation.demand = results[0].demand;
             reservation.song = results[0].song;
@@ -187,7 +186,6 @@ function findReservationById(user, callback) {
                     if (err) {
                         return callback(err);
                     }
-                    
                     reservation.singer_name = results[0].name;
                     reservation.singer_photoURL = 'http://ec2-52-78-132-224.ap-northeast-2.compute.amazonaws.com/images/'  + path.basename(results[0].photoURL);
                     return callback(null, reservation);
@@ -199,7 +197,6 @@ function findReservationById(user, callback) {
 
 
 function updateReservation(param, callback) {
-
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {

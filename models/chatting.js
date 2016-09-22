@@ -26,32 +26,31 @@ var async = require('async');
 
 /* 채팅 메시지 저장 */
 function insertChattingLog(param, callback) {
-    var sql_insertChattingLog =
-        'insert into chatting (sender, receiver, message) ' +
-        'values (?, ?, ?)';
+    var sql_insertChattingLog = 'INSERT INTO chatting (message, sender, receiver)' +
+                                'VALUES (?, ?, ?)';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql_insertChattingLog, [param.sender, param.receiver, param.message], function(err, results) {
+        dbConn.query(sql_insertChattingLog, [param.message, param.sender, param.receiver], function(err, results) {
             if (err) {
                 return callback(err);
             }
-            callback(null, results[0]);
+            callback(null);
         })
     });
 }
 /* 채팅 메시지 수신 */
 function getChattingLog(data, callback) {
     var sql_selectChattingLog =
-        'select id, sender, receiver, message, date ' +
+        'select id, sender, receiver, message, write_dtime ' +
         'from chatting ' +
-        'where date < CURRENT_TIMESTAMP and receiver = ? and receipt = 0';
+        'where write_dtime < CURRENT_TIMESTAMP and receiver = ? and receipt = 0';
     var sql_updateChattingLog =
         'update chatting ' +
         'set receipt = 1 ' +
-        'where id = ? and receipt = 0';
+        'where id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {

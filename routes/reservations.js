@@ -111,46 +111,51 @@ router.put('/:rid', isAuthenticated, function(req, res, next) {
 
   var noti_param = {};
   noti_param.sender_id = req.user.id;
+  noti_param.sender_name = req.user.name;
   noti_param.data_pk = param.rid;
   noti_param.type = param.type;
-  noti_param.receiver_id = req.body.sid;
+  noti_param.receiver_id = req.body.user_id;
 
-  console.log(param.type);
 
   Reservation.updateReservation(param, function(err) {
     if (err) {
       return next(err);
     }
-    
-    res.send({
-      code: 1,
-      result: '성공'
+
+    Notification.notify(noti_param, function(err, result) {
+      if (err) {
+        return next(err);
+      }
+      res.send({
+        code: 1,
+        result: result
+      });
     });
 
-    if ((param.type % 2 )== 1) {
-      var timeZone = "Asia/Seoul";
-      var day = 1;
-      var future = moment().tz(timeZone).add(day, 'd');
-      var crontime = future.second() + " " +
-          future.minute() + " " +
-          future.hour() + " " +
-          future.date() + " " +
-          future.month() + " ";
-      // crontime = '05 * * * * *';
+      if ((param.type % 2 )== 1) {
+        var timeZone = "Asia/Seoul";
+        var day = 1;
+        var future = moment().tz(timeZone).add(day, 'd');
+        var crontime = future.second() + " " +
+            future.minute() + " " +
+            future.hour() + " " +
+            future.date() + " " +
+            future.month() + " ";
+        // crontime = '05 * * * * *';
 
-      var job = new CronJob(crontime, function () {
-        logger.log('debug', 'CronJob Started');
-        Reservation.deleteReservation(param.rid, function (err, result) {
-          if (err) {
-            logger.log('debug', err)
-          }
-          logger.log('debug', result);
-        });
-        job.stop();
-      }, function () {
-        logger.log('debug', 'CronJob Completed');
-      }, true, timeZone);
-    }
+        var job = new CronJob(crontime, function () {
+          logger.log('debug', 'CronJob Started');
+          Reservation.deleteReservation(param.rid, function (err, result) {
+            if (err) {
+              logger.log('debug', err)
+            }
+            logger.log('debug', result);
+          });
+          job.stop();
+        }, function () {
+          logger.log('debug', 'CronJob Completed');
+        }, true, timeZone);
+      }
   });
 });
 

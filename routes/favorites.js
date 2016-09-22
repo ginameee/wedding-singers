@@ -45,6 +45,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
 
   var noti_param = {};
   noti_param.sender_id = req.user.id;
+  noti_param.sender_name = req.user.name;
   noti_param.data_pk = req.body.vid;
   noti_param.type = 50;
   noti_param.receiver_id = req.body.sid;
@@ -58,9 +59,15 @@ router.post('/', isAuthenticated, function(req, res, next) {
       return next(err);
     }
 
-    res.send({
-      code: 1,
-      result: '성공'
+    Notification.notify(noti_param, function(err, result) {
+      if (err) {
+        return next(err);
+      }
+
+      res.send({
+        code: 1,
+        result: result
+      });
     });
   });
 });
